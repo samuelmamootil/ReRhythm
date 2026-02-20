@@ -1,0 +1,128 @@
+@{
+    ViewData["Title"] = "Analyzing Resume";
+}
+
+<div class="hero-bg min-h-screen flex items-center justify-center px-4">
+  <div class="max-w-2xl w-full">
+    
+    <!-- Loading Card -->
+    <div class="glass-card rounded-2xl p-12 border border-slate-700 text-center">
+      
+      <!-- Animated Icon -->
+      <div class="mb-8 flex justify-center">
+        <div class="relative">
+          <div class="w-24 h-24 bg-sky-500/20 rounded-full flex items-center justify-center animate-pulse">
+            <svg class="w-12 h-12 text-sky-400 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <div class="absolute inset-0 w-24 h-24 bg-sky-500/10 rounded-full animate-ping"></div>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-3xl font-bold text-white mb-3">Analyzing Your Resume</h1>
+      <p class="text-slate-400 mb-8">Our AI is crafting your personalized learning roadmap</p>
+
+      <!-- Progress Steps -->
+      <div class="space-y-4 text-left">
+        <div class="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700" id="step1">
+          <div class="w-8 h-8 bg-sky-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-white font-semibold">Extracting Resume Information</p>
+            <p class="text-xs text-slate-500">Using AWS Textract OCR</p>
+          </div>
+          <div class="step-spinner hidden">
+            <svg class="w-5 h-5 text-sky-400 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+          </div>
+          <div class="step-check hidden">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700 opacity-50" id="step2">
+          <div class="w-8 h-8 bg-sky-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-white font-semibold">Analyzing Skills & Experience</p>
+            <p class="text-xs text-slate-500">Identifying skill gaps</p>
+          </div>
+          <div class="step-spinner hidden">
+            <svg class="w-5 h-5 text-sky-400 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+          </div>
+          <div class="step-check hidden">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700 opacity-50" id="step3">
+          <div class="w-8 h-8 bg-sky-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-white font-semibold">Generating 28-Day Roadmap</p>
+            <p class="text-xs text-slate-500">Creating personalized learning path</p>
+          </div>
+          <div class="step-spinner hidden">
+            <svg class="w-5 h-5 text-sky-400 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+          </div>
+          <div class="step-check hidden">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estimated Time -->
+      <p class="text-slate-500 text-sm mt-8">
+        This usually takes 1-2 minutes • Powered by AWS Bedrock
+      </p>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  // Simulate progress steps
+  setTimeout(() => {
+    document.querySelector('#step1 .step-spinner').classList.remove('hidden');
+  }, 500);
+
+  setTimeout(() => {
+    document.querySelector('#step1 .step-spinner').classList.add('hidden');
+    document.querySelector('#step1 .step-check').classList.remove('hidden');
+    document.getElementById('step2').classList.remove('opacity-50');
+    document.querySelector('#step2 .step-spinner').classList.remove('hidden');
+  }, 8000);
+
+  setTimeout(() => {
+    document.querySelector('#step2 .step-spinner').classList.add('hidden');
+    document.querySelector('#step2 .step-check').classList.remove('hidden');
+    document.getElementById('step3').classList.remove('opacity-50');
+    document.querySelector('#step3 .step-spinner').classList.remove('hidden');
+  }, 15000);
+</script>
+}

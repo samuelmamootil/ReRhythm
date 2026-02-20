@@ -1,0 +1,64 @@
+# ─── .NET Build Output ────────────────────────────────────
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+.vscode/
+
+# ─── Project & Config Files to Ignore ────────────────────
+**/appsettings*.json
+**/launchSettings.json
+**/*.csproj
+**/Program.cs
+**/project.assets.json
+**/project.nuget.cache
+**/*.nuget.dgspec.json
+**/.packages/
+
+# ─── AWS & Secrets ────────────────────────────────────────
+.aws/
+aws-credentials
+**/credentials
+**/*secrets*
+**/*secret*
+**/*credential*
+
+# ─── Environment Files ────────────────────────────────────
+.env
+.env.*
+*.env
+
+# ─── Certificates & Keys ─────────────────────────────────
+*.pem
+*.ppk
+*.pfx
+*.key
+*.p12
+*.cer
+rerythm-key.ppk
+
+# ─── Logs ─────────────────────────────────────────────────
+*.log
+logs/
+**/Logs/
+
+# ─── OS Files ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── IDE ──────────────────────────────────────────────────
+.idea/
+*.DotSettings.user
+*.sln.docstates
+
+# ─── Test Results ─────────────────────────────────────────
+TestResults/
+coverage*/
+*.coverage
+*.coveragexml
+
+# ─── Publish Output ───────────────────────────────────────
+**/publish/
+**/out/

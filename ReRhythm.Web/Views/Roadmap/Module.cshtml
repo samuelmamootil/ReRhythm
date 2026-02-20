@@ -1,0 +1,121 @@
+@model ReRhythm.Core.Services.WeeklyModule
+@{
+    ViewData["Title"] = $"Week {Model.WeekNumber}: {Model.Theme}";
+}
+
+<div class="hero-bg min-h-screen px-6 py-10">
+
+  <!-- Hero Header -->
+  <div class="text-center pt-10 pb-6 px-4">
+    <h1 class="text-4xl font-extrabold mb-2 leading-tight">
+      Week <span class="beat-text">@Model.WeekNumber</span>
+    </h1>
+    <p class="text-slate-400 text-lg max-w-2xl mx-auto">
+      @Model.Theme
+    </p>
+  </div>
+
+  <!-- Step Progress Bar -->
+  <partial name="_StepProgress" model="(ViewBag.UserId as string, 4)" />
+
+  <div class="max-w-4xl mx-auto px-4 pb-20">
+    
+    <!-- Back Button -->
+    <div class="mb-6">
+      <a asp-controller="Roadmap" asp-action="Index" asp-route-userId="@ViewBag.UserId"
+         class="text-slate-400 hover:text-white transition-colors text-sm">
+        ← Back to Roadmap
+      </a>
+    </div>
+
+    <!-- Week Overview Card -->
+    <div class="glass-card rounded-2xl p-8 mb-8 border border-slate-700">
+      
+      <!-- Milestones -->
+      @if (Model.MilestonesUnlocked.Any())
+      {
+        <div class="mb-6">
+          <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <span class="text-2xl">🏆</span> Milestones You'll Unlock
+          </h2>
+          <ul class="space-y-2">
+            @foreach (var milestone in Model.MilestonesUnlocked)
+            {
+              <li class="flex items-start gap-3 text-slate-300">
+                <span class="text-sky-400 mt-1">✓</span>
+                <span>@milestone</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Portfolio Project -->
+      @if (!string.IsNullOrEmpty(Model.PortfolioProject))
+      {
+        <div class="bg-slate-800/60 rounded-xl p-6 border border-slate-700">
+          <h2 class="text-xl font-bold text-white mb-3 flex items-center gap-2">
+            <span class="text-2xl">🛠️</span> Portfolio Project
+          </h2>
+          <p class="text-slate-300">@Model.PortfolioProject</p>
+        </div>
+      }
+    </div>
+
+    <!-- Daily Sprints -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+        <span class="text-3xl">📅</span> Daily Sprints
+      </h2>
+      <div class="space-y-4">
+        @foreach (var sprint in Model.DailySprints)
+        {
+          <div class="glass-card rounded-xl p-6 border border-slate-700 hover:border-sky-500 transition-colors">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-sky-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span class="text-sky-400 font-bold text-lg">@sprint.Day</span>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-semibold text-white mb-2">@sprint.Topic</h3>
+                <div class="flex flex-wrap gap-2 mb-3">
+                  <span class="text-xs bg-slate-800/60 text-slate-400 px-3 py-1 rounded-full border border-slate-700">
+                    @sprint.LessonFormat
+                  </span>
+                  <span class="text-xs bg-slate-800/60 text-slate-400 px-3 py-1 rounded-full border border-slate-700">
+                    @sprint.EstimatedMinutes min
+                  </span>
+                </div>
+                @if (!string.IsNullOrEmpty(sprint.ResourceRef))
+                {
+                  <a href="@sprint.ResourceRef" target="_blank" 
+                     class="text-sm text-sky-400 hover:text-sky-300 transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    View Resource
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Action Button -->
+    <div class="glass-card rounded-2xl p-6 border border-slate-700">
+      <p class="text-slate-400 text-center mb-4">
+        Complete all @Model.DailySprints.Count daily sprints to unlock this week's milestones
+      </p>
+      <a asp-controller="Roadmap" asp-action="Index" asp-route-userId="@ViewBag.UserId"
+         class="glow-btn w-full text-white font-semibold py-4 rounded-xl
+                flex items-center justify-center gap-2 text-base">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        Back to Full Roadmap
+      </a>
+    </div>
+
+  </div>
+</div>

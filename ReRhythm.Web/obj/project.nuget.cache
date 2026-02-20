@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "dgSpecHash": "bTSvK9MjGk4=",
+  "success": true,
+  "projectFilePath": "C:\\Sam\\2026\\ReRhythm\\ReRhythm.Web\\ReRhythm.Web.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.bedrockagentruntime\\4.0.8.8\\awssdk.bedrockagentruntime.4.0.8.8.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.bedrockruntime\\4.0.9\\awssdk.bedrockruntime.4.0.9.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.core\\4.0.3.12\\awssdk.core.4.0.3.12.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.dynamodbv2\\4.0.14\\awssdk.dynamodbv2.4.0.14.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.extensions.netcore.setup\\4.0.3.22\\awssdk.extensions.netcore.setup.4.0.3.22.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.s3\\4.0.18.6\\awssdk.s3.4.0.18.6.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.textract\\4.0.3.13\\awssdk.textract.4.0.3.13.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\microsoft.extensions.apidescription.server\\10.0.0\\microsoft.extensions.apidescription.server.10.0.0.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\microsoft.openapi\\2.4.1\\microsoft.openapi.2.4.1.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\pdfpig\\0.1.9\\pdfpig.0.1.9.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\questpdf\\2025.1.3\\questpdf.2025.1.3.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\swashbuckle.aspnetcore\\10.1.4\\swashbuckle.aspnetcore.10.1.4.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\10.1.4\\swashbuckle.aspnetcore.swagger.10.1.4.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\10.1.4\\swashbuckle.aspnetcore.swaggergen.10.1.4.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\10.1.4\\swashbuckle.aspnetcore.swaggerui.10.1.4.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "message": "ReRhythm.Core depends on AWSSDK.BedrockRuntime (>= 4.0.8.8) but AWSSDK.BedrockRuntime 4.0.8.8 was not found. AWSSDK.BedrockRuntime 4.0.9 was resolved instead.",
+      "projectPath": "C:\\Sam\\2026\\ReRhythm\\ReRhythm.Web\\ReRhythm.Web.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Sam\\2026\\ReRhythm\\ReRhythm.Web\\ReRhythm.Web.csproj",
+      "libraryId": "AWSSDK.BedrockRuntime",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}

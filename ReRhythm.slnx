@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ReRhythm.Core/ReRhythm.Core.csproj" />
+  <Project Path="ReRhythm.Infrastructure/ReRhythm.Infrastructure.csproj" />
+  <Project Path="ReRhythm.Web/ReRhythm.Web.csproj" />
+</Solution>

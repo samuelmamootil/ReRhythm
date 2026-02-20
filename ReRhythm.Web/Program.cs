@@ -1,0 +1,48 @@
+using Amazon.BedrockRuntime;        // ✅ Changed from BedrockAgentRuntime
+using Amazon.DynamoDBv2;
+using Amazon.S3;
+using Amazon.Textract;
+using ReRhythm.Core.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ── AWS Core ──────────────────────────────────────────
+builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
+
+// ── AWS Services ──────────────────────────────────────
+builder.Services.AddAWSService<IAmazonS3>();
+builder.Services.AddAWSService<IAmazonTextract>();
+builder.Services.AddAWSService<IAmazonDynamoDB>();
+builder.Services.AddAWSService<IAmazonBedrockRuntime>();  // ✅ Now resolves correctly
+
+// ── App Services ──────────────────────────────────────
+builder.Services.AddScoped<TextractService>();
+builder.Services.AddScoped<BedrockRAGService>();          // ✅ Registered once only
+builder.Services.AddScoped<RoadmapService>();
+builder.Services.AddScoped<DynamoDbService>();
+builder.Services.AddScoped<ResumeGeneratorService>();
+
+// ── MVC ───────────────────────────────────────────────
+builder.Services.AddControllersWithViews();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Resume}/{action=Upload}/{id?}");
+
+app.Run();

@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"] - ReRhythm</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="~/css/site.css" />
+  <style>
+    body { background: #0a0e1a; }
+    .gradient-text {
+      background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .beat-text { color: #38bdf8; }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.15);
+    }
+    .glow-btn {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+      transition: all 0.3s ease;
+    }
+    .glow-btn:hover {
+      box-shadow: 0 0 35px rgba(14, 165, 233, 0.7);
+      transform: translateY(-1px);
+    }
+    .step-line {
+      background: linear-gradient(90deg, #38bdf8, #6366f1);
+    }
+    .nav-logo-icon {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      border-radius: 10px;
+      padding: 6px;
+    }
+    .hero-bg {
+      background: radial-gradient(ellipse at 50% 0%, rgba(56,189,248,0.08) 0%, transparent 70%);
+    }
+  </style>
+</head>
+<body class="text-white antialiased min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="border-b border-slate-800 px-8 py-3 flex items-center justify-between
+              sticky top-0 z-50"
+       style="background: rgba(10,14,26,0.95); backdrop-filter: blur(10px);">
+    <a asp-controller="Resume" asp-action="Upload" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+      <div class="nav-logo-icon">
+        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/>
+        </svg>
+      </div>
+      <div>
+        <span class="font-bold text-white text-lg">ReRhythm</span>
+        <span class="text-slate-400 text-xs ml-2">AI Career Coach</span>
+      </div>
+    </a>
+    <div class="flex items-center gap-6 text-sm">
+      <span class="text-xs bg-slate-800 border border-slate-700 text-slate-300
+                   px-3 py-1 rounded-full">
+        Powered by AWS Bedrock
+      </span>
+    </div>
+  </nav>
+
+  <main>@RenderBody()</main>
+
+  <script src="~/js/site.js" defer></script>
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

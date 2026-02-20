@@ -1,0 +1,100 @@
+@model ReRhythm.Core.Models.LessonPlan
+@{
+    ViewData["Title"] = $"Lesson: {Model.Topic}";
+}
+
+<div class="hero-bg min-h-screen px-6 py-10">
+
+  <!-- Hero Header -->
+  <div class="text-center pt-10 pb-6 px-4">
+    <h1 class="text-4xl font-extrabold mb-2 leading-tight">
+      <span class="beat-text">Lesson</span>: @Model.Topic
+    </h1>
+    <p class="text-slate-400 text-lg max-w-2xl mx-auto">
+      Week @Model.WeekNumber · Day @Model.DayNumber · <span class="text-sky-400 font-semibold">@Model.TargetRole</span>
+    </p>
+  </div>
+
+  <!-- Step Progress Bar -->
+  <partial name="_StepProgress" model="(Model.UserId, 4)" />
+
+  <div class="max-w-3xl mx-auto px-4 pb-20">
+    <div class="glass-card rounded-2xl p-8">
+
+    <!-- Flashcards -->
+    <section class="mb-8">
+      <h2 class="text-lg font-semibold mb-3">🃏 Flashcards</h2>
+      <div class="space-y-3">
+        @foreach (var card in Model.Flashcards)
+        {
+          <details class="bg-slate-800/60 rounded-xl p-4 cursor-pointer
+                          border border-slate-700 hover:border-sky-500
+                          transition-colors">
+            <summary class="font-medium text-white">@card.Front</summary>
+            <p class="mt-2 text-slate-300 text-sm">@card.Back</p>
+            @if (!string.IsNullOrEmpty(card.SourceRef))
+            {
+              <p class="mt-1 text-xs text-slate-500">Source: @card.SourceRef</p>
+            }
+          </details>
+        }
+      </div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="mb-8">
+      <h2 class="text-lg font-semibold mb-3">🧠 Quiz</h2>
+      @for (int i = 0; i < Model.Quiz.Count; i++)
+      {
+        var q = Model.Quiz[i];
+        <div class="bg-slate-800/60 rounded-xl p-5 mb-4 border border-slate-700">
+          <p class="font-medium mb-3">@(i + 1). @q.Question</p>
+          <div class="space-y-2">
+            @for (int j = 0; j < q.Options.Count; j++)
+            {
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input type="radio" name="quiz_@i" value="@j"
+                       class="accent-sky-500" />
+                <span class="text-slate-300 text-sm">@q.Options[j]</span>
+              </label>
+            }
+          </div>
+          <details class="mt-3">
+            <summary class="text-xs text-sky-400 cursor-pointer">
+              Show Explanation
+            </summary>
+            <p class="mt-1 text-xs text-slate-400">@q.Explanation</p>
+          </details>
+        </div>
+      }
+    </section>
+
+    <!-- Mini Lab -->
+    @if (!string.IsNullOrEmpty(Model.MiniLabDescription))
+    {
+      <section class="mb-8">
+        <h2 class="text-lg font-semibold mb-3">🔬 15-Min Hands-On Lab</h2>
+        <div class="bg-slate-800/60 rounded-xl p-5 border border-slate-700">
+          <p class="text-slate-300 text-sm whitespace-pre-line">
+            @Model.MiniLabDescription
+          </p>
+        </div>
+      </section>
+    }
+
+    <!-- Complete Button -->
+    <form asp-controller="Lesson" asp-action="Complete" method="post">
+      <input type="hidden" name="userId" value="@Model.UserId" />
+      <input type="hidden" name="moduleId" value="@Model.ModuleId" />
+      <button type="submit"
+              class="glow-btn w-full text-white font-semibold py-4 rounded-xl
+                     flex items-center justify-center gap-2 text-base">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Mark Lesson Complete
+      </button>
+    </form>
+    </div>
+  </div>
+</div>

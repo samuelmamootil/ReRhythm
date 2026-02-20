@@ -1,0 +1,252 @@
+@model ReRhythm.Core.Services.RoadmapPlan
+@{
+    ViewData["Title"] = "Milestone Tracker";
+    var allLessons = ViewBag.AllLessons as List<ReRhythm.Core.Models.LessonPlan> ?? new();
+}
+
+<div class="hero-bg min-h-screen px-6 py-10">
+
+  <!-- Hero Header -->
+  <div class="text-center pt-10 pb-6 px-4">
+    <h1 class="text-4xl font-extrabold mb-2 leading-tight">
+      Milestone <span class="beat-text">Tracker</span>
+    </h1>
+    <p class="text-slate-400 text-lg max-w-2xl mx-auto">
+      Target Role: <span class="text-sky-400 font-semibold">@Model.TargetRole</span>
+    </p>
+  </div>
+
+  <!-- Step Progress Bar -->
+  <partial name="_StepProgress" model="(Model.UserId, 4)" />
+
+  <!-- Header -->
+  <div class="max-w-6xl mx-auto mb-12">
+    <div class="flex items-center justify-between mb-6">
+      <a asp-controller="Roadmap" asp-action="Index" asp-route-userId="@Model.UserId"
+         class="text-slate-400 hover:text-white transition-colors">
+        ← Back to Roadmap
+      </a>
+    </div>
+
+    <!-- Overall Progress -->
+    <div class="glass-card rounded-2xl p-8 border border-slate-700">
+      <div class="grid md:grid-cols-3 gap-6 mb-6">
+        <div class="text-center">
+          <div class="text-5xl font-bold text-sky-400 mb-2">@ViewBag.ProgressPercent%</div>
+          <div class="text-slate-400 text-sm">Overall Progress</div>
+        </div>
+        <div class="text-center">
+          <div class="text-5xl font-bold text-sky-400 mb-2">@ViewBag.CompletedCount</div>
+          <div class="text-slate-400 text-sm">Lessons Completed</div>
+        </div>
+        <div class="text-center">
+          <div class="text-5xl font-bold text-slate-400 mb-2">@(ViewBag.TotalLessons - ViewBag.CompletedCount)</div>
+          <div class="text-slate-400 text-sm">Lessons Remaining</div>
+        </div>
+      </div>
+      <div class="w-full bg-slate-800/60 border border-slate-700 rounded-full h-4 overflow-hidden">
+        <div class="bg-sky-500 h-4 rounded-full transition-all duration-500" 
+             style="width: @ViewBag.ProgressPercent%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skills Visualization -->
+  <div class="max-w-6xl mx-auto mb-12">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 text-white">
+      <span class="text-3xl">🎯</span> Skills Journey
+    </h2>
+    <div class="grid md:grid-cols-2 gap-6">
+      
+      <!-- Skills Identified -->
+      @if (Model.SkillsIdentified.Any())
+      {
+        <div class="glass-card rounded-2xl p-6 border border-slate-700">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-sky-500/20 rounded-xl flex items-center justify-center text-xl">✓</div>
+            <h3 class="text-xl font-semibold text-white">Current Skills</h3>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @foreach (var skill in Model.SkillsIdentified)
+            {
+              <span class="bg-slate-800/60 text-slate-300 text-sm px-4 py-2 rounded-full border border-slate-700">@skill</span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Skills to Acquire -->
+      @if (Model.SkillsToAcquire.Any())
+      {
+        <div class="glass-card rounded-2xl p-6 border border-slate-700">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-sky-500/20 rounded-xl flex items-center justify-center text-xl">⚡</div>
+            <h3 class="text-xl font-semibold text-white">Skills to Unlock</h3>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @foreach (var skill in Model.SkillsToAcquire)
+            {
+              <span class="bg-slate-800/60 text-slate-300 text-sm px-4 py-2 rounded-full border border-slate-700">@skill</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Weekly Milestones -->
+  <div class="max-w-6xl mx-auto mb-12">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 text-white">
+      <span class="text-3xl">🗓️</span> Weekly Milestones & Portfolio
+    </h2>
+    <div class="grid md:grid-cols-2 gap-6">
+      @foreach (var module in Model.Modules)
+      {
+        var weekLessons = allLessons.Where(l => l.WeekNumber == module.WeekNumber).ToList();
+        var weekCompleted = weekLessons.Count(l => l.IsCompleted);
+        var weekTotal = module.DailySprints.Count;
+        var weekProgress = weekTotal > 0 ? (int)((weekCompleted / (double)weekTotal) * 100) : 0;
+        var isUnlocked = weekProgress == 100;
+
+        <div class="glass-card rounded-2xl p-6 border border-slate-700">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <div class="text-xs text-sky-400 font-semibold mb-1">WEEK @module.WeekNumber</div>
+              <h3 class="text-xl font-bold text-white mb-2">@module.Theme</h3>
+            </div>
+            @if (isUnlocked)
+            {
+              <div class="text-3xl">🏆</div>
+            }
+            else
+            {
+              <div class="text-3xl opacity-30">🔒</div>
+            }
+          </div>
+
+          <!-- Week Progress -->
+          <div class="mb-4">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>@weekCompleted / @weekTotal lessons</span>
+              <span>@weekProgress%</span>
+            </div>
+            <div class="w-full bg-slate-800/60 border border-slate-700 rounded-full h-2 overflow-hidden">
+              <div class="bg-sky-500 h-2 rounded-full transition-all duration-500" 
+                   style="width: @weekProgress%"></div>
+            </div>
+          </div>
+
+          <!-- Milestones -->
+          @if (module.MilestonesUnlocked.Any())
+          {
+            <div class="mb-3 bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+              <p class="text-xs text-slate-400 font-semibold mb-2">MILESTONES</p>
+              <ul class="space-y-1">
+                @foreach (var m in module.MilestonesUnlocked)
+                {
+                  <li class="text-sm text-slate-300 flex items-start gap-2">
+                    <span class="@(isUnlocked ? "text-sky-400" : "text-slate-600") mt-0.5">@(isUnlocked ? "✓" : "○")</span>
+                    <span class="@(isUnlocked ? "" : "opacity-50")">@m</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          <!-- Portfolio Project -->
+          @if (!string.IsNullOrEmpty(module.PortfolioProject))
+          {
+            <div class="bg-slate-800/50 rounded-xl p-3 border border-slate-700">
+              <p class="text-xs text-sky-400 font-semibold mb-1 flex items-center gap-2">
+                <span>🛠️</span> PORTFOLIO PROJECT
+              </p>
+              <p class="text-slate-300 text-sm @(isUnlocked ? "" : "opacity-50")">@module.PortfolioProject</p>
+              @if (isUnlocked)
+              {
+                <span class="inline-block mt-2 text-xs bg-sky-500/20 text-sky-400 px-3 py-1 rounded-full border border-sky-500/30">
+                  ✓ Unlocked
+                </span>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Future Resume Preview -->
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 text-white">
+      <span class="text-3xl">📄</span> Future-Ready Resume Preview
+    </h2>
+    <div class="glass-card rounded-2xl p-8 border border-slate-700">
+      <div class="mb-6">
+        <h3 class="text-xl font-semibold text-white mb-3">Upon Completion, You Will Have:</h3>
+      </div>
+      
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Skills Section -->
+        <div class="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <div class="text-2xl mb-3">💼</div>
+          <h4 class="font-semibold text-white mb-2">Technical Skills</h4>
+          <p class="text-sm text-slate-400 mb-3">All @Model.SkillsToAcquire.Count target skills mastered</p>
+          <div class="flex flex-wrap gap-1">
+            @foreach (var skill in Model.SkillsToAcquire.Take(3))
+            {
+              <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700">@skill</span>
+            }
+            @if (Model.SkillsToAcquire.Count > 3)
+            {
+              <span class="text-xs text-slate-500">+@(Model.SkillsToAcquire.Count - 3) more</span>
+            }
+          </div>
+        </div>
+
+        <!-- Portfolio Section -->
+        <div class="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <div class="text-2xl mb-3">🚀</div>
+          <h4 class="font-semibold text-white mb-2">Portfolio Projects</h4>
+          <p class="text-sm text-slate-400 mb-3">@Model.Modules.Count validated projects</p>
+          <ul class="space-y-1">
+            @foreach (var module in Model.Modules.Take(2))
+            {
+              <li class="text-xs text-slate-400">• Week @module.WeekNumber project</li>
+            }
+            @if (Model.Modules.Count > 2)
+            {
+              <li class="text-xs text-slate-500">+@(Model.Modules.Count - 2) more</li>
+            }
+          </ul>
+        </div>
+
+        <!-- Certifications Section -->
+        <div class="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <div class="text-2xl mb-3">🎓</div>
+          <h4 class="font-semibold text-white mb-2">Certifications</h4>
+          <p class="text-sm text-slate-400 mb-3">Ready for AWS certification</p>
+          <div class="text-xs text-sky-400">
+            ✓ Hands-on experience<br/>
+            ✓ Interview-ready knowledge
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-slate-700">
+        <div class="text-center">
+          <p class="text-slate-400 text-sm mb-4">
+            Complete all @ViewBag.TotalLessons lessons to unlock your enhanced resume
+          </p>
+          <a asp-controller="Roadmap" asp-action="DownloadResume" asp-route-userId="@Model.UserId"
+             class="glow-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white text-base">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+            </svg>
+            Generate Professional Resume PDF
+          </a>
+          <p class="text-xs text-slate-500 mt-3">ATS-friendly format with all your new skills & projects</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
