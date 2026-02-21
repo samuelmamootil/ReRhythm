@@ -1,4 +1,4 @@
-# ReRhythm 🏆
+# ReRhythm 
 > **Top 3 Finalist — AWS-Judged Hackathon** | AI-powered 28-day career coaching platform that analyzes your resume and generates a personalized learning roadmap to land your target role.
 
 ![.NET](https://img.shields.io/badge/.NET-10.0-purple?logo=dotnet)
