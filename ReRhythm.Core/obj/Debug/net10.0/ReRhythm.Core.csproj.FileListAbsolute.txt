@@ -29,3 +29,4 @@ C:\Sam\2026\ReRhythm\ReRhythm.Core\bin\Debug\net10.0\LatoFont\Lato-SemiBoldItali
 C:\Sam\2026\ReRhythm\ReRhythm.Core\bin\Debug\net10.0\LatoFont\Lato-Thin.ttf
 C:\Sam\2026\ReRhythm\ReRhythm.Core\bin\Debug\net10.0\LatoFont\Lato-ThinItalic.ttf
 C:\Sam\2026\ReRhythm\ReRhythm.Core\bin\Debug\net10.0\LatoFont\OFL.txt
+C:\Sam\2026\ReRhythm\ReRhythm.Core\obj\Debug\net10.0\ReRhythm.Core.sourcelink.json

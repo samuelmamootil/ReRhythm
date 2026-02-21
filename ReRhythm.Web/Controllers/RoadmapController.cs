@@ -75,9 +75,12 @@ public class RoadmapController : Controller
     [HttpGet]
     public async Task<IActionResult> Tracker(string userId, CancellationToken ct)
     {
+        if (string.IsNullOrEmpty(userId))
+            return RedirectToAction("FindUser");
+
         var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
         if (plan is null)
-            return RedirectToAction("Upload", "Resume");
+            return RedirectToAction("FindUser");
 
         var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
         var completedCount = allLessons.Count(l => l.IsCompleted);
@@ -89,6 +92,27 @@ public class RoadmapController : Controller
         ViewBag.AllLessons = allLessons;
 
         return View(plan);
+    }
+
+    // GET /Roadmap/FindUser
+    [HttpGet]
+    public IActionResult FindUser()
+    {
+        return View();
+    }
+
+    // POST /Roadmap/FindUser
+    [HttpPost]
+    public async Task<IActionResult> FindUser(string userId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            return Json(new { success = false, error = "Please enter a User ID." });
+
+        var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
+        if (plan is null)
+            return Json(new { success = false, error = "User ID not found. Please upload a resume first." });
+
+        return Json(new { success = true, redirectUrl = Url.Action("Tracker", new { userId }) });
     }
 
     // GET /Roadmap/DownloadResume?userId=xxx

@@ -80,22 +80,56 @@
                  fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
-            <input type="text" name="userId" placeholder="e.g. samuel-mamootil" required
+            <input type="text" name="userId" id="userId" placeholder="e.g. john-doe-123" required
+                   pattern="[a-zA-Z0-9-]+" title="Only letters, numbers, and hyphens allowed"
                    class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
                           pl-10 pr-4 py-3 text-white placeholder-slate-500
                           focus:outline-none focus:border-sky-500 focus:ring-1
                           focus:ring-sky-500 transition-colors" />
           </div>
+          <p class="text-xs text-slate-500 mt-1">Letters, numbers, and hyphens only (e.g., john-doe-123)</p>
+        </div>
+
+        <!-- Years of Experience Field -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-slate-300 mb-2">Years of Experience</label>
+          <input type="number" name="yearsOfExperience" min="0" max="50" required
+                 class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
+                        px-4 py-3 text-white placeholder-slate-500
+                        focus:outline-none focus:border-sky-500 focus:ring-1
+                        focus:ring-sky-500 transition-colors" />
+        </div>
+
+        <!-- Industry Field -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-slate-300 mb-2">Target Industry</label>
+          <select name="industry" id="industry" required
+                  class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
+                         px-4 py-3 text-white
+                         focus:outline-none focus:border-sky-500 focus:ring-1
+                         focus:ring-sky-500 transition-colors">
+            <option value="">Select Industry</option>
+            <option value="IT">Information Technology</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Finance">Finance & Banking</option>
+            <option value="Manufacturing">Manufacturing</option>
+            <option value="Retail">Retail & E-commerce</option>
+            <option value="Education">Education</option>
+            <option value="Consulting">Consulting</option>
+            <option value="Media">Media & Entertainment</option>
+          </select>
         </div>
 
         <!-- Target Role Field -->
         <div class="mb-5">
           <label class="block text-sm font-medium text-slate-300 mb-2">Target Role</label>
-          <input type="text" name="targetRole" placeholder="e.g. Cloud Architect" required
-                 class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
-                        px-4 py-3 text-white placeholder-slate-500
-                        focus:outline-none focus:border-sky-500 focus:ring-1
-                        focus:ring-sky-500 transition-colors" />
+          <select name="targetRole" id="targetRole" required
+                  class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
+                         px-4 py-3 text-white
+                         focus:outline-none focus:border-sky-500 focus:ring-1
+                         focus:ring-sky-500 transition-colors">
+            <option value="">Select role first</option>
+          </select>
         </div>
 
         <!-- Drag & Drop File Zone -->
@@ -118,7 +152,7 @@
                 </svg>
               </div>
               <p class="text-slate-300 font-medium">Drop your resume here</p>
-              <p class="text-slate-500 text-sm mt-1">or click to browse · PDF only</p>
+              <p class="text-slate-500 text-sm mt-1">or click to browse · PDF or DOCX only</p>
             </div>
 
             <!-- File selected state (hidden by default) -->
@@ -139,8 +173,7 @@
             </div>
 
           </div>
-          <input type="file" id="fileInput" name="resume" accept=".pdf"
-                 class="hidden" required />
+          <input type="file" id="fileInput" name="resume" accept=".pdf,.docx" required style="display: none;" />
         </div>
 
         <!-- Error Message -->
@@ -176,7 +209,95 @@
   const fileName   = document.getElementById('fileName');
   const fileSize   = document.getElementById('fileSize');
 
+  // Industry to roles mapping by experience level
+  const rolesByIndustryAndExp = {
+    'IT': {
+      junior: ['Junior Software Engineer', 'Associate Developer', 'Junior DevOps Engineer', 'Junior Data Analyst', 'QA Engineer', 'Technical Support Engineer'],
+      mid: ['Software Engineer', 'Cloud Engineer', 'DevOps Engineer', 'Data Engineer', 'Full Stack Developer', 'Backend Developer', 'Frontend Developer', 'Security Engineer'],
+      senior: ['Senior Software Engineer', 'Senior Cloud Architect', 'Senior DevOps Engineer', 'Lead Developer', 'Principal Engineer', 'Staff Engineer'],
+      leadership: ['Engineering Manager', 'Technical Director', 'VP of Engineering', 'CTO', 'Solutions Architect', 'Enterprise Architect']
+    },
+    'Healthcare': {
+      junior: ['Healthcare Coordinator', 'Clinical Assistant', 'Junior Healthcare Analyst'],
+      mid: ['Healthcare Administrator', 'Clinical Manager', 'Healthcare IT Specialist', 'Nurse Practitioner'],
+      senior: ['Senior Healthcare Administrator', 'Senior Clinical Manager', 'Healthcare Consultant'],
+      leadership: ['Medical Director', 'Chief Medical Officer', 'VP of Healthcare Operations', 'Healthcare Executive']
+    },
+    'Finance': {
+      junior: ['Junior Financial Analyst', 'Associate Analyst', 'Junior Accountant'],
+      mid: ['Financial Analyst', 'Risk Manager', 'Compliance Officer', 'Accountant', 'Auditor'],
+      senior: ['Senior Financial Analyst', 'Senior Risk Manager', 'Investment Banker', 'Portfolio Manager'],
+      leadership: ['Finance Director', 'VP of Finance', 'CFO', 'Chief Risk Officer', 'Head of Investment Banking']
+    },
+    'Manufacturing': {
+      junior: ['Production Coordinator', 'Junior Process Engineer', 'Quality Control Technician'],
+      mid: ['Production Manager', 'Process Engineer', 'Manufacturing Engineer', 'Quality Assurance Manager'],
+      senior: ['Senior Production Manager', 'Senior Manufacturing Engineer', 'Supply Chain Manager'],
+      leadership: ['Operations Director', 'VP of Operations', 'Plant Manager', 'Chief Operations Officer']
+    },
+    'Retail': {
+      junior: ['Assistant Store Manager', 'Retail Coordinator', 'Junior Merchandiser'],
+      mid: ['Store Manager', 'E-commerce Manager', 'Merchandising Manager', 'Customer Experience Manager'],
+      senior: ['Senior Store Manager', 'Regional Manager', 'Retail Analyst', 'Supply Chain Coordinator'],
+      leadership: ['Retail Director', 'VP of Retail Operations', 'Chief Merchandising Officer', 'Head of E-commerce']
+    },
+    'Education': {
+      junior: ['Teaching Assistant', 'Junior Instructional Designer', 'Education Coordinator'],
+      mid: ['Teacher', 'Curriculum Developer', 'Instructional Designer', 'Academic Advisor'],
+      senior: ['Senior Teacher', 'Lead Curriculum Developer', 'Senior Academic Advisor'],
+      leadership: ['Principal', 'Education Director', 'Dean', 'VP of Education', 'Superintendent']
+    },
+    'Consulting': {
+      junior: ['Junior Consultant', 'Associate Consultant', 'Business Analyst'],
+      mid: ['Management Consultant', 'Strategy Consultant', 'IT Consultant', 'Change Management Consultant'],
+      senior: ['Senior Consultant', 'Principal Consultant', 'Lead Business Analyst'],
+      leadership: ['Consulting Director', 'Partner', 'VP of Consulting', 'Managing Director']
+    },
+    'Media': {
+      junior: ['Junior Content Creator', 'Junior Designer', 'Social Media Coordinator'],
+      mid: ['Content Creator', 'Digital Marketing Manager', 'Social Media Manager', 'Graphic Designer', 'UX/UI Designer'],
+      senior: ['Senior Content Creator', 'Senior UX/UI Designer', 'Video Producer', 'Creative Lead'],
+      leadership: ['Creative Director', 'VP of Marketing', 'Chief Marketing Officer', 'Head of Digital']
+    }
+  };
+
+  function getExpLevel(years) {
+    if (years <= 2) return 'junior';
+    if (years <= 5) return 'mid';
+    if (years <= 10) return 'senior';
+    return 'leadership';
+  }
+
+  function updateRoles() {
+    const industry = document.getElementById('industry').value;
+    const years = parseInt(document.querySelector('[name="yearsOfExperience"]').value) || 0;
+    const roleSelect = document.getElementById('targetRole');
+    roleSelect.innerHTML = '<option value="">Select a role</option>';
+    
+    if (industry && rolesByIndustryAndExp[industry]) {
+      const expLevel = getExpLevel(years);
+      const roles = rolesByIndustryAndExp[industry][expLevel] || [];
+      roles.forEach(role => {
+        const option = document.createElement('option');
+        option.value = role;
+        option.textContent = role;
+        roleSelect.appendChild(option);
+      });
+    }
+  }
+
+  document.getElementById('industry').addEventListener('change', updateRoles);
+  document.querySelector('[name="yearsOfExperience"]').addEventListener('input', updateRoles);
+
   function showFile(file) {
+    // Validate file type
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a PDF or DOCX file only.');
+      fileInput.value = '';
+      return;
+    }
+    
     fileName.textContent = file.name;
     fileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
     dropDef.classList.add('hidden');
@@ -210,7 +331,7 @@
   dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.type === 'application/pdf') {
+    if (file) {
       const dt = new DataTransfer();
       dt.items.add(file);
       fileInput.files = dt.files;
@@ -220,8 +341,13 @@
   });
 
   // Show loading state on submit
-  document.getElementById('uploadForm').addEventListener('submit', (e) => {
+  document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
     const btn = document.getElementById('submitBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.classList.add('hidden');
+    
     btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
@@ -307,6 +433,37 @@
       overlay.querySelector('#overlay-step3').classList.remove('opacity-50');
       overlay.querySelector('#overlay-step3').innerHTML += '<svg class="w-5 h-5 text-sky-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>';
     }, 15000);
+    
+    // Submit form via AJAX
+    const formData = new FormData(e.target);
+    try {
+      const response = await fetch(e.target.action, {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        window.location.href = result.redirectUrl;
+      } else {
+        overlay.remove();
+        btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg> Analyze Resume`;
+        btn.disabled = false;
+        errorMsg.textContent = result.error || 'Upload failed. Please try again.';
+        errorMsg.classList.remove('hidden');
+      }
+    } catch (error) {
+      overlay.remove();
+      btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+      </svg> Analyze Resume`;
+      btn.disabled = false;
+      errorMsg.textContent = 'Network error. Please check your connection and try again.';
+      errorMsg.classList.remove('hidden');
+    }
   });
 </script>
 }

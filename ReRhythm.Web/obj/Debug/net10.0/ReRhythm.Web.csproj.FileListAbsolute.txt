@@ -167,3 +167,7 @@ C:\Sam\2026\ReRhythm\ReRhythm.Web\bin\Debug\net10.0\runtimes\win-x86\native\libg
 C:\Sam\2026\ReRhythm\ReRhythm.Web\bin\Debug\net10.0\runtimes\win-x86\native\libstdc++-6.dll
 C:\Sam\2026\ReRhythm\ReRhythm.Web\bin\Debug\net10.0\runtimes\win-x86\native\libwinpthread-1.dll
 C:\Sam\2026\ReRhythm\ReRhythm.Web\bin\Debug\net10.0\runtimes\win-x86\native\qpdf.dll
+C:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Debug\net10.0\ReRhythm.Web.sourcelink.json
+C:\Sam\2026\ReRhythm\ReRhythm.Web\bin\Debug\net10.0\DocumentFormat.OpenXml.dll
+C:\Sam\2026\ReRhythm\ReRhythm.Web\bin\Debug\net10.0\DocumentFormat.OpenXml.Framework.dll
+C:\Sam\2026\ReRhythm\ReRhythm.Web\bin\Debug\net10.0\System.IO.Packaging.dll

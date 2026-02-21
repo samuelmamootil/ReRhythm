@@ -1,0 +1,136 @@
+@{
+    ViewData["Title"] = "Find Your Progress";
+}
+
+<div class="hero-bg min-h-screen">
+
+  <!-- Hero Header -->
+  <div class="text-center pt-16 pb-10 px-4">
+    <h1 class="text-5xl font-extrabold mb-4 leading-tight">
+      Track Your <span class="beat-text">Progress</span>
+    </h1>
+    <p class="text-slate-400 text-lg max-w-2xl mx-auto">
+      Enter your User ID to view your milestone tracker and learning progress.
+    </p>
+  </div>
+
+  <!-- Find User Card -->
+  <div class="max-w-xl mx-auto px-4 pb-20">
+    <div class="glass-card rounded-2xl p-8">
+
+      <!-- Card Header -->
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor"
+               stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-white">Find Your Progress</h2>
+          <p class="text-slate-400 text-sm">Enter the User ID you used when uploading your resume</p>
+        </div>
+      </div>
+
+      <form id="findUserForm">
+
+        <!-- User ID Field -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-slate-300 mb-2">Your User ID</label>
+          <div class="relative">
+            <svg class="absolute left-3 top-3 w-4 h-4 text-slate-500"
+                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            <input type="text" name="userId" id="userId" placeholder="e.g. john-doe-123" required
+                   pattern="[a-zA-Z0-9-]+" title="Only letters, numbers, and hyphens allowed"
+                   class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
+                          pl-10 pr-4 py-3 text-white placeholder-slate-500
+                          focus:outline-none focus:border-sky-500 focus:ring-1
+                          focus:ring-sky-500 transition-colors" />
+          </div>
+          <p class="text-xs text-slate-500 mt-1">The same User ID you used when uploading your resume</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMsg" class="hidden mb-4 px-4 py-3 bg-red-900/40 border
+             border-red-700 rounded-xl text-red-300 text-sm">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submitBtn"
+                class="glow-btn w-full text-white font-semibold py-4 rounded-xl
+                       flex items-center justify-center gap-2 text-base">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor"
+               stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+          View My Progress
+        </button>
+
+      </form>
+
+      <!-- Help Text -->
+      <div class="mt-6 p-4 bg-slate-800/40 rounded-xl border border-slate-700">
+        <p class="text-sm text-slate-400">
+          <span class="text-sky-400 font-semibold">Don't have a User ID yet?</span><br/>
+          <a asp-controller="Resume" asp-action="Upload" class="text-sky-400 hover:text-sky-300 underline">
+            Upload your resume
+          </a> to get started with your personalized 28-day learning roadmap.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  document.getElementById('findUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const btn = document.getElementById('submitBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const userId = document.getElementById('userId').value;
+    
+    errorMsg.classList.add('hidden');
+    
+    btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+    </svg> Searching...`;
+    btn.disabled = true;
+    
+    try {
+      const formData = new FormData();
+      formData.append('userId', userId);
+      
+      const response = await fetch('/Roadmap/FindUser', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        localStorage.setItem('reRhythmUserId', userId);
+        window.location.href = result.redirectUrl;
+      } else {
+        btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg> View My Progress`;
+        btn.disabled = false;
+        errorMsg.textContent = result.error || 'User ID not found.';
+        errorMsg.classList.remove('hidden');
+      }
+    } catch (error) {
+      btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+      </svg> View My Progress`;
+      btn.disabled = false;
+      errorMsg.textContent = 'Network error. Please try again.';
+      errorMsg.classList.remove('hidden');
+    }
+  });
+</script>
+}

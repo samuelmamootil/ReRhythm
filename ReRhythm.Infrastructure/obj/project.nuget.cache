@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "87RO8MHZPbg=",
+  "dgSpecHash": "4BaOUbVfD6I=",
   "success": true,
   "projectFilePath": "C:\\Sam\\2026\\ReRhythm\\ReRhythm.Infrastructure\\ReRhythm.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -10,6 +10,8 @@
     "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.dynamodbv2\\4.0.14\\awssdk.dynamodbv2.4.0.14.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.s3\\4.0.18.6\\awssdk.s3.4.0.18.6.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.textract\\4.0.3.13\\awssdk.textract.4.0.3.13.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\documentformat.openxml\\3.2.0\\documentformat.openxml.3.2.0.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\documentformat.openxml.framework\\3.2.0\\documentformat.openxml.framework.3.2.0.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\microsoft.extensions.configuration\\10.0.3\\microsoft.extensions.configuration.10.0.3.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\10.0.3\\microsoft.extensions.configuration.abstractions.10.0.3.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\microsoft.extensions.configuration.binder\\10.0.3\\microsoft.extensions.configuration.binder.10.0.3.nupkg.sha512",
@@ -17,7 +19,8 @@
     "C:\\Users\\mamoo\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.3\\microsoft.extensions.logging.abstractions.10.0.3.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\microsoft.extensions.primitives\\10.0.3\\microsoft.extensions.primitives.10.0.3.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\pdfpig\\0.1.9\\pdfpig.0.1.9.nupkg.sha512",
-    "C:\\Users\\mamoo\\.nuget\\packages\\questpdf\\2025.1.3\\questpdf.2025.1.3.nupkg.sha512"
+    "C:\\Users\\mamoo\\.nuget\\packages\\questpdf\\2025.1.3\\questpdf.2025.1.3.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\system.io.packaging\\8.0.1\\system.io.packaging.8.0.1.nupkg.sha512"
   ],
   "logs": [
     {

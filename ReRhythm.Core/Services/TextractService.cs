@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace ReRhythm.Core.Services;
 
@@ -47,6 +49,16 @@ public class TextractService
         if (fileBytes.Length == 0)
             throw new InvalidOperationException("File is empty");
         
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        
+        // Handle DOCX directly
+        if (ext == ".docx")
+        {
+            _logger.LogInformation("Processing DOCX file directly");
+            return ExtractTextFromDocx(fileBytes);
+        }
+        
+        // Upload to S3 for Textract
         memoryStream.Position = 0;
         await _s3.PutObjectAsync(new PutObjectRequest
         {
@@ -64,7 +76,7 @@ public class TextractService
         {
             var detectRequest = new DetectDocumentTextRequest
             {
-                Document = new Document
+                Document = new Amazon.Textract.Model.Document
                 {
                     S3Object = new Amazon.Textract.Model.S3Object
                     {
@@ -84,11 +96,21 @@ public class TextractService
 
             return resumeText;
         }
-        catch (UnsupportedDocumentException ex)
+        catch (Exception ex)
         {
             _logger.LogWarning(ex, "Textract failed, falling back to PdfPig");
             return ExtractTextWithPdfPig(fileBytes);
         }
+    }
+
+    private string ExtractTextFromDocx(byte[] docxBytes)
+    {
+        using var stream = new MemoryStream(docxBytes);
+        using var doc = WordprocessingDocument.Open(stream, false);
+        var body = doc.MainDocumentPart?.Document?.Body;
+        if (body == null) return string.Empty;
+        
+        return body.InnerText;
     }
 
     private string ExtractTextWithPdfPig(byte[] pdfBytes)
@@ -110,6 +132,7 @@ public class TextractService
         return ext switch
         {
             ".pdf" => "application/pdf",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             ".png" => "image/png",
             ".jpg" or ".jpeg" => "image/jpeg",
             ".tiff" or ".tif" => "image/tiff",
