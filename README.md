@@ -18,7 +18,7 @@
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture Diagram
 
 ![ReRhythm AWS Architecture](Assets/architecture.png)
 
