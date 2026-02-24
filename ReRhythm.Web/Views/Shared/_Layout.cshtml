@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>@ViewData["Title"] - ReRhythm</title>
-  <link rel="icon" type="image/png" href="~/rhythm_logo.png" />
+  <link rel="icon" type="image/png" href="~/rhythmlogo.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="~/css/site.css" />
   <style>
@@ -80,7 +80,7 @@
               sticky top-0 z-50"
        style="background: rgba(10,14,26,0.95); backdrop-filter: blur(10px);">
     <a asp-controller="Resume" asp-action="Upload" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-      <img src="~/rhythm_logo.png" alt="ReRhythm" class="h-20" />
+      <img id="navLogo" src="~/rhythmlogo.png" alt="ReRhythm" class="h-20 m-0 p-0" />
      <!-- Navbar   <span class="text-xl font-bold gradient-text">ReRhythm</span>-->
     </a>
     <div class="flex items-center gap-6 text-sm">
@@ -105,13 +105,32 @@
     const themeToggle = document.getElementById('themeToggle');
     const darkIcon = document.getElementById('darkIcon');
     const lightIcon = document.getElementById('lightIcon');
+    const navLogo = document.getElementById('navLogo');
     const savedTheme = localStorage.getItem('theme') || 'dark';
+    
+    function updateLogo(isLight) {
+      if (navLogo) {
+        navLogo.src = isLight ? '/rhythmlogo_light.png' : '/rhythmlogo.png';
+      }
+      // Update all page logos
+      const pageLogos = document.querySelectorAll('.page-logo');
+      pageLogos.forEach(logo => {
+        logo.src = isLight ? '/rhythmlogo_light.png' : '/rhythmlogo.png';
+      });
+    }
     
     if (savedTheme === 'light') {
       document.body.classList.add('light-mode');
       darkIcon.classList.add('hidden');
       lightIcon.classList.remove('hidden');
+      updateLogo(true);
     }
+    
+    // Update logos on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLight = document.body.classList.contains('light-mode');
+      updateLogo(isLight);
+    });
     
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('light-mode');
@@ -119,6 +138,7 @@
       localStorage.setItem('theme', isLight ? 'light' : 'dark');
       darkIcon.classList.toggle('hidden');
       lightIcon.classList.toggle('hidden');
+      updateLogo(isLight);
     });
 
     // Update Track Milestones link if userId exists
