@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using ReRhythm.Core.Models;
 
 namespace ReRhythm.Core.Services;
 
@@ -91,6 +92,26 @@ public class RoadmapService
 
         // Persist to DynamoDB
         await _dynamoDb.SaveRoadmapAsync(plan, ct);
+
+        // Create lesson records for tracking
+        foreach (var module in plan.Modules)
+        {
+            foreach (var sprint in module.DailySprints)
+            {
+                var lesson = new LessonPlan
+                {
+                    UserId = userId,
+                    ModuleId = $"week{module.WeekNumber}-day{sprint.Day}",
+                    WeekNumber = module.WeekNumber,
+                    DayNumber = sprint.Day,
+                    Topic = sprint.Topic,
+                    TargetRole = targetRole,
+                    IsCompleted = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _dynamoDb.SaveLessonPlanAsync(lesson, ct);
+            }
+        }
 
         _logger.LogInformation(
             "28-day roadmap generated and saved for user {UserId}, role: {Role}",

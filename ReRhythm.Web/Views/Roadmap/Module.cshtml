@@ -1,12 +1,17 @@
 @model ReRhythm.Core.Services.WeeklyModule
 @{
     ViewData["Title"] = $"Week {Model.WeekNumber}: {Model.Theme}";
+    var allLessons = ViewBag.AllLessons as List<ReRhythm.Core.Models.LessonPlan> ?? new();
+    var weekLessons = allLessons.Where(l => l.WeekNumber == Model.WeekNumber).ToList();
 }
 
 <div class="hero-bg min-h-screen px-6 py-10">
 
   <!-- Hero Header -->
   <div class="text-center pt-10 pb-6 px-4">
+    <div class="flex justify-center">
+      <img src="~/rhythmlogo.png" alt="ReRhythm Logo" class="h-32 page-logo m-0 p-0" />
+    </div>
     <h1 class="text-4xl font-extrabold mb-2 leading-tight">
       Week <span class="beat-text">@Model.WeekNumber</span>
     </h1>
@@ -20,12 +25,16 @@
 
   <div class="max-w-4xl mx-auto px-4 pb-20">
     
-    <!-- Back Button -->
-    <div class="mb-6">
+    <!-- Back Button & Progress -->
+    <div class="mb-6 flex items-center justify-between">
       <a asp-controller="Roadmap" asp-action="Index" asp-route-userId="@ViewBag.UserId"
          class="text-slate-400 hover:text-white transition-colors text-sm">
         ← Back to Roadmap
       </a>
+      <div class="text-right">
+        <div id="weekProgress" class="text-2xl font-bold text-sky-400">0%</div>
+        <div class="text-xs text-slate-400">Week Complete</div>
+      </div>
     </div>
 
     <!-- Week Overview Card -->
@@ -38,11 +47,11 @@
           <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <span class="text-2xl">🏆</span> Milestones You'll Unlock
           </h2>
-          <ul class="space-y-2">
+          <ul id="milestonesList" class="space-y-2">
             @foreach (var milestone in Model.MilestonesUnlocked)
             {
-              <li class="flex items-start gap-3 text-slate-300">
-                <span class="text-sky-400 mt-1">✓</span>
+              <li class="flex items-start gap-3 text-slate-300 milestone-item opacity-50 transition-all duration-500">
+                <span class="text-slate-600 mt-1">○</span>
                 <span>@milestone</span>
               </li>
             }
@@ -53,11 +62,14 @@
       <!-- Portfolio Project -->
       @if (!string.IsNullOrEmpty(Model.PortfolioProject))
       {
-        <div class="bg-slate-800/60 rounded-xl p-6 border border-slate-700">
+        <div id="portfolioProject" class="bg-slate-800/60 rounded-xl p-6 border border-slate-700 opacity-50 transition-all duration-500">
           <h2 class="text-xl font-bold text-white mb-3 flex items-center gap-2">
             <span class="text-2xl">🛠️</span> Portfolio Project
           </h2>
           <p class="text-slate-300">@Model.PortfolioProject</p>
+          <span class="inline-block mt-3 text-xs bg-slate-800 text-slate-500 px-3 py-1 rounded-full border border-slate-700">
+            🔒 Complete all sprints to unlock
+          </span>
         </div>
       }
     </div>
@@ -70,13 +82,33 @@
       <div class="space-y-4">
         @foreach (var sprint in Model.DailySprints)
         {
-          <div class="glass-card rounded-xl p-6 border border-slate-700 hover:border-sky-500 transition-colors">
+          var lessonId = $"week{Model.WeekNumber}-day{sprint.Day}";
+          var isCompleted = weekLessons.Any(l => l.DayNumber == sprint.Day && l.IsCompleted);
+          
+          <div class="lesson-card glass-card rounded-xl p-6 border border-slate-700 hover:border-sky-500 transition-all duration-300 @(isCompleted ? "completed" : "")" 
+               data-week="@Model.WeekNumber" data-day="@sprint.Day">
             <div class="flex items-start gap-4">
+              <!-- Checkbox -->
+              <div class="flex-shrink-0 pt-1">
+                <button class="complete-btn w-8 h-8 rounded-lg border-2 @(isCompleted ? "bg-sky-500 border-sky-500" : "border-slate-600 hover:border-sky-500") transition-all duration-300 flex items-center justify-center"
+                        onclick="toggleLesson('@ViewBag.UserId', @Model.WeekNumber, @sprint.Day, this)">
+                  @if (isCompleted)
+                  {
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                      <path d="M5 13l4 4L19 7"/>
+                    </svg>
+                  }
+                </button>
+              </div>
+              
+              <!-- Day Badge -->
               <div class="w-12 h-12 bg-sky-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
                 <span class="text-sky-400 font-bold text-lg">@sprint.Day</span>
               </div>
+              
+              <!-- Content -->
               <div class="flex-1">
-                <h3 class="font-semibold text-white mb-2">@sprint.Topic</h3>
+                <h3 class="font-semibold text-white mb-2 @(isCompleted ? "line-through opacity-60" : "")">@sprint.Topic</h3>
                 <div class="flex flex-wrap gap-2 mb-3">
                   <span class="text-xs bg-slate-800/60 text-slate-400 px-3 py-1 rounded-full border border-slate-700">
                     @sprint.LessonFormat
@@ -84,6 +116,12 @@
                   <span class="text-xs bg-slate-800/60 text-slate-400 px-3 py-1 rounded-full border border-slate-700">
                     @sprint.EstimatedMinutes min
                   </span>
+                  @if (isCompleted)
+                  {
+                    <span class="text-xs bg-sky-500/20 text-sky-400 px-3 py-1 rounded-full border border-sky-500/30 animate-pulse">
+                      ✓ Completed
+                    </span>
+                  }
                 </div>
                 @if (!string.IsNullOrEmpty(sprint.ResourceRef))
                 {
@@ -107,15 +145,152 @@
       <p class="text-slate-400 text-center mb-4">
         Complete all @Model.DailySprints.Count daily sprints to unlock this week's milestones
       </p>
-      <a asp-controller="Roadmap" asp-action="Index" asp-route-userId="@ViewBag.UserId"
+      <a asp-controller="Roadmap" asp-action="Tracker" asp-route-userId="@ViewBag.UserId"
          class="glow-btn w-full text-white font-semibold py-4 rounded-xl
                 flex items-center justify-center gap-2 text-base">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
-        Back to Full Roadmap
+        View Full Progress Tracker
       </a>
     </div>
 
   </div>
 </div>
+
+<script>
+function toggleLesson(userId, weekNumber, dayNumber, button) {
+  const card = button.closest('.lesson-card');
+  const isCompleted = card.classList.contains('completed');
+  
+  if (isCompleted) return; // Don't allow un-completing
+  
+  // Optimistic UI update
+  card.classList.add('completed');
+  button.classList.add('bg-sky-500', 'border-sky-500');
+  button.classList.remove('border-slate-600');
+  button.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>';
+  
+  // Add completion badge
+  const content = card.querySelector('.flex-1');
+  const badges = content.querySelector('.flex.flex-wrap');
+  if (!badges.querySelector('.animate-pulse')) {
+    const completeBadge = document.createElement('span');
+    completeBadge.className = 'text-xs bg-sky-500/20 text-sky-400 px-3 py-1 rounded-full border border-sky-500/30 animate-pulse';
+    completeBadge.textContent = '✓ Completed';
+    badges.appendChild(completeBadge);
+  }
+  
+  // Celebration animation
+  card.style.transform = 'scale(1.02)';
+  setTimeout(() => card.style.transform = 'scale(1)', 300);
+  
+  // API call
+  fetch('/Roadmap/CompleteLesson', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `userId=${userId}&weekNumber=${weekNumber}&dayNumber=${dayNumber}`
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      updateProgress(data.completedCount, data.totalLessons, data.progressPercent);
+      onLessonComplete();
+    }
+  })
+  .catch(err => console.error('Error:', err));
+}
+
+function updateProgress(completed, total, percent) {
+  document.getElementById('weekProgress').textContent = percent + '%';
+}
+
+function checkWeekCompletion() {
+  const allCards = document.querySelectorAll('.lesson-card');
+  const completedCards = document.querySelectorAll('.lesson-card.completed');
+  
+  if (allCards.length === completedCards.length && allCards.length > 0) {
+    // Unlock milestones
+    document.querySelectorAll('.milestone-item').forEach((item, index) => {
+      item.classList.remove('opacity-50');
+      const span = item.querySelector('span');
+      span.textContent = '✓';
+      span.classList.remove('text-slate-600');
+      span.classList.add('text-sky-400');
+    });
+    
+    // Unlock portfolio
+    const portfolio = document.getElementById('portfolioProject');
+    if (portfolio) {
+      portfolio.classList.remove('opacity-50');
+      const badge = portfolio.querySelector('.text-slate-500');
+      if (badge) {
+        badge.textContent = '✓ Unlocked!';
+        badge.classList.remove('text-slate-500', 'bg-slate-800');
+        badge.classList.add('text-sky-400', 'bg-sky-500/20', 'border-sky-500/30');
+      }
+    }
+  }
+}
+
+function onLessonComplete() {
+  const allCards = document.querySelectorAll('.lesson-card');
+  const completedCards = document.querySelectorAll('.lesson-card.completed');
+  
+  if (allCards.length === completedCards.length) {
+    // Unlock milestones with animation
+    document.querySelectorAll('.milestone-item').forEach((item, index) => {
+      setTimeout(() => {
+        item.classList.remove('opacity-50');
+        item.querySelector('span').textContent = '✓';
+        item.querySelector('span').classList.remove('text-slate-600');
+        item.querySelector('span').classList.add('text-sky-400');
+      }, index * 200);
+    });
+    
+    // Unlock portfolio
+    const portfolio = document.getElementById('portfolioProject');
+    if (portfolio) {
+      setTimeout(() => {
+        portfolio.classList.remove('opacity-50');
+        const badge = portfolio.querySelector('.text-slate-500');
+        if (badge) {
+          badge.textContent = '✓ Unlocked!';
+          badge.classList.remove('text-slate-500', 'bg-slate-800');
+          badge.classList.add('text-sky-400', 'bg-sky-500/20', 'border-sky-500/30');
+        }
+      }, 1000);
+    }
+    
+    // Confetti effect
+    showCelebration();
+    
+    // Get current week number
+    const weekNumber = document.querySelector('.lesson-card')?.dataset.week;
+    
+    // Redirect to roadmap with unlock notification
+    setTimeout(() => {
+      const userId = '@ViewBag.UserId';
+      window.location.href = `/Roadmap/Index?userId=${userId}&weekCompleted=${weekNumber}`;
+    }, 2000);
+  }
+}
+
+function showCelebration() {
+  const celebration = document.createElement('div');
+  celebration.className = 'fixed inset-0 pointer-events-none z-50 flex items-center justify-center';
+  celebration.innerHTML = '<div class="text-6xl animate-bounce">🎉</div>';
+  document.body.appendChild(celebration);
+  setTimeout(() => celebration.remove(), 2000);
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+  checkWeekCompletion();
+  
+  const allCards = document.querySelectorAll('.lesson-card');
+  const completedCards = document.querySelectorAll('.lesson-card.completed');
+  const percent = allCards.length > 0 ? Math.round((completedCards.length / allCards.length) * 100) : 0;
+  document.getElementById('weekProgress').textContent = percent + '%';
+});
+</script>

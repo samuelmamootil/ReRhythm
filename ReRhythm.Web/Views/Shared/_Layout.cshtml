@@ -143,13 +143,9 @@
 
     // Update Track Milestones link if userId exists
     const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId') || localStorage.getItem('reRhythmUserId') || '';
+    const userId = urlParams.get('userId');
     if (userId) {
-      localStorage.setItem('reRhythmUserId', userId);
-      const trackLink = document.querySelector('a[href="/Roadmap/FindUser"]');
-      if (trackLink) {
-        trackLink.href = '/Roadmap/Tracker?userId=' + userId;
-      }
+      localStorage.setItem('reRhythmLastUserId', userId);
     }
   </script>
 

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Milestone Tracker";
     var allLessons = ViewBag.AllLessons as List<ReRhythm.Core.Models.LessonPlan> ?? new();
+    var isFullyComplete = ViewBag.ProgressPercent >= 100;
 }
 
 <div class="hero-bg min-h-screen px-6 py-10">
@@ -110,21 +111,51 @@
         var weekTotal = module.DailySprints.Count;
         var weekProgress = weekTotal > 0 ? (int)((weekCompleted / (double)weekTotal) * 100) : 0;
         var isUnlocked = weekProgress == 100;
+        
+        // Check if week is accessible (Week 1 always accessible, others need previous week complete)
+        var isAccessible = module.WeekNumber == 1;
+        if (module.WeekNumber > 1)
+        {
+          var prevWeekLessons = allLessons.Where(l => l.WeekNumber == module.WeekNumber - 1).ToList();
+          var prevModule = Model.Modules.FirstOrDefault(m => m.WeekNumber == module.WeekNumber - 1);
+          var prevWeekTotal = prevModule?.DailySprints.Count ?? 0;
+          var prevWeekCompleted = prevWeekLessons.Count(l => l.IsCompleted);
+          isAccessible = prevWeekTotal > 0 && prevWeekCompleted >= prevWeekTotal;
+        }
 
-        <div class="glass-card rounded-2xl p-6 border border-slate-700">
+        <div class="glass-card rounded-2xl p-6 border border-slate-700 @(isAccessible ? "hover:border-sky-500 cursor-pointer" : "opacity-50 cursor-not-allowed") transition-colors"
+             @Html.Raw(isAccessible ? $"onclick=\"window.location.href='/Roadmap/Module?userId={Model.UserId}&weekNumber={module.WeekNumber}'\"" : "")>
           <div class="flex items-start justify-between mb-4">
             <div>
               <div class="text-xs text-sky-400 font-semibold mb-1">WEEK @module.WeekNumber</div>
               <h3 class="text-xl font-bold text-white mb-2">@module.Theme</h3>
+              @if (!isAccessible)
+              {
+                <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                  <span>🔒</span> Complete Week @(module.WeekNumber - 1) to unlock
+                </p>
+              }
             </div>
-            @if (isUnlocked)
-            {
-              <div class="text-3xl">🏆</div>
-            }
-            else
-            {
-              <div class="text-3xl opacity-30">🔒</div>
-            }
+            <div class="flex items-center gap-2">
+              @if (isUnlocked)
+              {
+                <div class="text-3xl">🏆</div>
+              }
+              else if (!isAccessible)
+              {
+                <div class="text-3xl opacity-30">🔒</div>
+              }
+              else
+              {
+                <div class="text-3xl opacity-50">⏳</div>
+              }
+              @if (isAccessible)
+              {
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M9 5l7 7-7 7"/>
+                </svg>
+              }
+            </div>
           </div>
 
           <!-- Week Progress -->
@@ -236,19 +267,61 @@
 
       <div class="mt-6 pt-6 border-t border-slate-700">
         <div class="text-center">
-          <p class="text-slate-400 text-sm mb-4">
-            Complete all @ViewBag.TotalLessons lessons to unlock your enhanced resume
-          </p>
-          <a asp-controller="Roadmap" asp-action="DownloadResume" asp-route-userId="@Model.UserId"
-             class="glow-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white text-base">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
-            </svg>
-            Generate Professional Resume PDF
-          </a>
-          <p class="text-xs text-slate-500 mt-3">ATS-friendly format with all your new skills & projects</p>
+          @if (isFullyComplete)
+          {
+            <p class="text-sky-400 text-sm mb-4 font-semibold">
+              🎉 Congratulations! Your enhanced resume is ready to download
+            </p>
+            <a asp-controller="Roadmap" asp-action="DownloadResume" asp-route-userId="@Model.UserId"
+               class="glow-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white text-base">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+              </svg>
+              Generate Professional Resume PDF
+            </a>
+            <p class="text-xs text-slate-500 mt-3">ATS-friendly format with all your new skills & projects</p>
+          }
+          else
+          {
+            <p class="text-slate-400 text-sm mb-4">
+              Complete all @ViewBag.TotalLessons lessons to unlock your enhanced resume
+            </p>
+            <button onclick="shakeButton()" id="lockedResumeBtn"
+                    class="locked-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed relative overflow-hidden">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              Resume Locked
+            </button>
+            <p class="text-xs text-slate-500 mt-3">@(ViewBag.TotalLessons - ViewBag.CompletedCount) lessons remaining</p>
+          }
         </div>
       </div>
+      
+      <style>
+        .locked-btn {
+          transition: all 0.3s ease;
+        }
+        .locked-btn:hover {
+          border-color: #ef4444;
+        }
+        @@keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+          20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake {
+          animation: shake 0.5s;
+        }
+      </style>
+      
+      <script>
+        function shakeButton() {
+          const btn = document.getElementById('lockedResumeBtn');
+          btn.classList.add('shake');
+          setTimeout(() => btn.classList.remove('shake'), 500);
+        }
+      </script>
     </div>
   </div>
 

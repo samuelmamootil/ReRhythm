@@ -1,6 +1,7 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using ReRhythm.Core.Models;
 using System.Text.Json;
 
@@ -10,14 +11,16 @@ public class DynamoDbService
 {
     private readonly IAmazonDynamoDB _dynamo;
     private readonly IConfiguration _config;
+    private readonly ILogger<DynamoDbService> _logger;
 
     private string RoadmapTable => _config["ReRhythm:RoadmapTableName"]!;
     private string LessonTable  => _config["ReRhythm:LessonTableName"]!;
 
-    public DynamoDbService(IAmazonDynamoDB dynamo, IConfiguration config)
+    public DynamoDbService(IAmazonDynamoDB dynamo, IConfiguration config, ILogger<DynamoDbService> logger)
     {
         _dynamo = dynamo;
         _config = config;
+        _logger = logger;
     }
 
     // ── Roadmap Methods ────────────────────────────────────────────────────────
@@ -117,6 +120,22 @@ public class DynamoDbService
         string moduleId,
         CancellationToken ct = default)
     {
+        _logger.LogInformation("Fetching lesson: userId={UserId}, moduleId={ModuleId}", userId, moduleId);
+        
+        // First get the lesson
+        var lesson = await GetLessonPlanAsync(userId, moduleId, ct);
+        if (lesson == null)
+        {
+            _logger.LogWarning("Lesson not found: userId={UserId}, moduleId={ModuleId}", userId, moduleId);
+            return;
+        }
+        
+        _logger.LogInformation("Marking lesson complete: {Topic}", lesson.Topic);
+        
+        // Update completion status
+        lesson.IsCompleted = true;
+        
+        // Save back to DynamoDB
         await _dynamo.UpdateItemAsync(new UpdateItemRequest
         {
             TableName = LessonTable,
@@ -125,12 +144,15 @@ public class DynamoDbService
                 ["userId"]   = new AttributeValue { S = userId },
                 ["moduleId"] = new AttributeValue { S = moduleId }
             },
-            UpdateExpression = "SET isCompleted = :val",
+            UpdateExpression = "SET isCompleted = :val, lessonJson = :json",
             ExpressionAttributeValues = new Dictionary<string, AttributeValue>
             {
-                [":val"] = new AttributeValue { BOOL = true }
+                [":val"] = new AttributeValue { BOOL = true },
+                [":json"] = new AttributeValue { S = JsonSerializer.Serialize(lesson) }
             }
         }, ct);
+        
+        _logger.LogInformation("Lesson marked complete successfully");
     }
 
     public async Task<List<LessonPlan>> GetAllLessonsForUserAsync(

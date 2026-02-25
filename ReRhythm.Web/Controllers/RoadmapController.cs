@@ -31,11 +31,14 @@ public class RoadmapController : Controller
         if (plan is null)
             return RedirectToAction("Upload", "Resume");
 
-        var completedCount = await _dynamoDb.GetCompletedLessonCountAsync(userId, ct);
+        var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
+        var completedCount = allLessons.Count(l => l.IsCompleted);
         var totalLessons = plan.Modules.Sum(m => m.DailySprints.Count);
+        
         ViewBag.CompletedCount = completedCount;
         ViewBag.TotalLessons = totalLessons;
         ViewBag.ProgressPercent = totalLessons > 0 ? (int)((completedCount / (double)totalLessons) * 100) : 0;
+        ViewBag.AllLessons = allLessons;
 
         return View(plan);
     }
@@ -69,7 +72,9 @@ public class RoadmapController : Controller
         if (module is null)
             return NotFound("Module not found.");
 
+        var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
         ViewBag.UserId = userId;
+        ViewBag.AllLessons = allLessons;
         return View(module);
     }
 
@@ -115,6 +120,26 @@ public class RoadmapController : Controller
             return Json(new { success = false, error = "User ID not found. Please upload a resume first." });
 
         return Json(new { success = true, redirectUrl = Url.Action("Tracker", new { userId }) });
+    }
+
+    // POST /Roadmap/CompleteLesson
+    [HttpPost]
+    public async Task<IActionResult> CompleteLesson(string userId, int weekNumber, int dayNumber, CancellationToken ct)
+    {
+        var moduleId = $"week{weekNumber}-day{dayNumber}";
+        _logger.LogInformation("Marking lesson complete: userId={UserId}, moduleId={ModuleId}", userId, moduleId);
+        
+        await _dynamoDb.MarkLessonCompleteAsync(userId, moduleId, ct);
+        
+        var completedCount = await _dynamoDb.GetCompletedLessonCountAsync(userId, ct);
+        var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
+        var totalLessons = plan?.Modules.Sum(m => m.DailySprints.Count) ?? 0;
+        var progressPercent = totalLessons > 0 ? (int)((completedCount / (double)totalLessons) * 100) : 0;
+        
+        _logger.LogInformation("Lesson marked complete. Progress: {Completed}/{Total} ({Percent}%)", 
+            completedCount, totalLessons, progressPercent);
+        
+        return Json(new { success = true, completedCount, totalLessons, progressPercent });
     }
 
     // GET /Roadmap/DownloadResume?userId=xxx

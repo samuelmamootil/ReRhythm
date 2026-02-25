@@ -155,6 +155,8 @@
   <!-- Timeline View -->
   @if (Model.Modules.Any())
   {
+    var allLessons = ViewBag.AllLessons as List<ReRhythm.Core.Models.LessonPlan> ?? new();
+    
     <div class="max-w-5xl mx-auto">
       <h2 class="text-2xl font-bold mb-8 flex items-center gap-3 text-white">
         <span class="text-3xl">📅</span> 4-Week Timeline
@@ -165,39 +167,80 @@
         <div class="space-y-8">
           @foreach (var module in Model.Modules)
           {
-            <div class="relative pl-20">
+            var weekLessons = allLessons.Where(l => l.WeekNumber == module.WeekNumber).ToList();
+            var weekCompleted = weekLessons.Count(l => l.IsCompleted);
+            var weekTotal = module.DailySprints.Count;
+            var isWeekComplete = weekCompleted == weekTotal && weekTotal > 0;
+            
+            // Check if previous week is complete (Week 1 is always unlocked)
+            var isPreviousWeekComplete = module.WeekNumber == 1;
+            if (module.WeekNumber > 1)
+            {
+              var prevWeekLessons = allLessons.Where(l => l.WeekNumber == module.WeekNumber - 1).ToList();
+              var prevModule = Model.Modules.FirstOrDefault(m => m.WeekNumber == module.WeekNumber - 1);
+              var prevWeekTotal = prevModule?.DailySprints.Count ?? 0;
+              var prevWeekCompleted = prevWeekLessons.Count(l => l.IsCompleted);
+              isPreviousWeekComplete = prevWeekTotal > 0 && prevWeekCompleted >= prevWeekTotal;
+            }
+            
+            var isLocked = !isPreviousWeekComplete;
+            
+            <div class="relative pl-20 week-module @(isLocked ? "locked" : "unlocked")" data-week="@module.WeekNumber">
               <!-- Timeline Dot -->
-              <div class="absolute left-4 w-9 h-9 bg-sky-500/20 border-2 border-sky-500 rounded-full flex items-center justify-center font-bold text-sky-400">
-                @module.WeekNumber
+              <div class="absolute left-4 w-9 h-9 @(isLocked ? "bg-slate-800 border-slate-600" : "bg-sky-500/20 border-sky-500") border-2 rounded-full flex items-center justify-center font-bold @(isLocked ? "text-slate-600" : "text-sky-400") transition-all duration-500">
+                @if (isLocked)
+                {
+                  <span class="text-lg">🔒</span>
+                }
+                else
+                {
+                  @module.WeekNumber
+                }
               </div>
               
               <!-- Module Card -->
-              <div class="glass-card rounded-2xl p-6 border border-slate-700 hover:border-sky-500 transition-colors">
+              <div class="glass-card rounded-2xl p-6 border @(isLocked ? "border-slate-800 opacity-50" : "border-slate-700 hover:border-sky-500") transition-all duration-500">
                 <div class="flex items-start justify-between mb-4">
                   <div>
-                    <div class="text-xs text-sky-400 font-semibold mb-1">WEEK @module.WeekNumber</div>
-                    <h3 class="text-2xl font-bold text-white mb-2">@module.Theme</h3>
+                    <div class="text-xs @(isLocked ? "text-slate-600" : "text-sky-400") font-semibold mb-1">WEEK @module.WeekNumber</div>
+                    <h3 class="text-2xl font-bold @(isLocked ? "text-slate-600" : "text-white") mb-2">@module.Theme</h3>
+                    @if (isLocked)
+                    {
+                      <p class="text-xs text-slate-500 mt-2 flex items-center gap-2">
+                        <span>🔒</span> Complete Week @(module.WeekNumber - 1) to unlock
+                      </p>
+                    }
                   </div>
-                  <a asp-controller="Roadmap" asp-action="Module"
-                     asp-route-userId="@Model.UserId"
-                     asp-route-weekNumber="@module.WeekNumber"
-                     class="glow-btn px-5 py-2 rounded-xl text-sm font-semibold text-white">
-                    Start Week →
-                  </a>
+                  @if (isLocked)
+                  {
+                    <button disabled class="px-5 py-2 rounded-xl text-sm font-semibold bg-slate-800 text-slate-600 cursor-not-allowed">
+                      Locked
+                    </button>
+                  }
+                  else
+                  {
+                    var hasStarted = weekCompleted > 0;
+                    <a asp-controller="Roadmap" asp-action="Module"
+                       asp-route-userId="@Model.UserId"
+                       asp-route-weekNumber="@module.WeekNumber"
+                       class="glow-btn px-5 py-2 rounded-xl text-sm font-semibold text-white">
+                      @(hasStarted ? "Continue Learning →" : "Start Week →")
+                    </a>
+                  }
                 </div>
 
                 <!-- Milestones -->
                 @if (module.MilestonesUnlocked.Any())
                 {
                   <div class="mb-4 bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                    <p class="text-sm text-sky-400 font-semibold mb-2 flex items-center gap-2">
+                    <p class="text-sm @(isLocked ? "text-slate-600" : "text-sky-400") font-semibold mb-2 flex items-center gap-2">
                       <span class="text-lg">🏆</span> Milestones You'll Unlock
                     </p>
                     <ul class="space-y-1">
                       @foreach (var m in module.MilestonesUnlocked)
                       {
-                        <li class="text-sm text-slate-300 flex items-start gap-2">
-                          <span class="text-sky-400 mt-0.5">✓</span>
+                        <li class="text-sm @(isLocked ? "text-slate-600" : "text-slate-300") flex items-start gap-2">
+                          <span class="@(isLocked ? "text-slate-600" : "text-sky-400") mt-0.5">✓</span>
                           <span>@m</span>
                         </li>
                       }
@@ -209,15 +252,15 @@
                 @if (!string.IsNullOrEmpty(module.PortfolioProject))
                 {
                   <div class="mb-4 bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                    <p class="text-sm text-sky-400 font-semibold flex items-center gap-2">
+                    <p class="text-sm @(isLocked ? "text-slate-600" : "text-sky-400") font-semibold flex items-center gap-2">
                       <span class="text-lg">🛠️</span> Portfolio Project
                     </p>
-                    <p class="text-slate-300 text-sm mt-1">@module.PortfolioProject</p>
+                    <p class="@(isLocked ? "text-slate-600" : "text-slate-300") text-sm mt-1">@module.PortfolioProject</p>
                   </div>
                 }
 
                 <!-- Daily Sprints Preview -->
-                @if (module.DailySprints.Any())
+                @if (module.DailySprints.Any() && !isLocked)
                 {
                   <div class="space-y-2">
                     <p class="text-xs text-slate-400 font-semibold mb-3">DAILY SPRINTS PREVIEW</p>
@@ -261,3 +304,120 @@
 
 
 </div>
+
+<style>
+@@keyframes unlock-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+@@keyframes unlock-fade-in {
+  from { opacity: 0.5; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.week-module.locked {
+  pointer-events: none;
+}
+
+.week-module.unlocked.just-unlocked {
+  animation: unlock-fade-in 0.8s ease-out;
+}
+
+.week-module.unlocked.just-unlocked .absolute {
+  animation: unlock-pulse 1s ease-in-out;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const justCompleted = urlParams.get('weekCompleted');
+  
+  if (justCompleted) {
+    const nextWeek = parseInt(justCompleted) + 1;
+    const nextWeekModule = document.querySelector(`.week-module[data-week="${nextWeek}"]`);
+    
+    if (nextWeekModule && nextWeekModule.classList.contains('unlocked')) {
+      setTimeout(() => {
+        nextWeekModule.classList.add('just-unlocked');
+        
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-sky-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce';
+        notification.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🎉</span>
+            <div>
+              <div class="font-bold">Week ${nextWeek} Unlocked!</div>
+              <div class="text-sm opacity-90">Great job completing Week ${justCompleted}!</div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          nextWeekModule.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500);
+        
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          notification.style.transition = 'opacity 0.5s';
+          setTimeout(() => notification.remove(), 500);
+        }, 4000);
+        
+        window.history.replaceState({}, '', window.location.pathname + '?userId=' + urlParams.get('userId'));
+      }, 300);
+    }
+  }
+});
+</script>
+  animation: unlock-fade-in 0.8s ease-out;
+}
+
+.week-module.unlocked.just-unlocked .absolute {
+  animation: unlock-pulse 1s ease-in-out;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const justCompleted = urlParams.get('weekCompleted');
+  
+  if (justCompleted) {
+    const nextWeek = parseInt(justCompleted) + 1;
+    const nextWeekModule = document.querySelector(`.week-module[data-week="${nextWeek}"]`);
+    
+    if (nextWeekModule && nextWeekModule.classList.contains('unlocked')) {
+      setTimeout(() => {
+        nextWeekModule.classList.add('just-unlocked');
+        
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-sky-500 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce';
+        notification.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🎉</span>
+            <div>
+              <div class="font-bold">Week ${nextWeek} Unlocked!</div>
+              <div class="text-sm opacity-90">Great job completing Week ${justCompleted}!</div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          nextWeekModule.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500);
+        
+        setTimeout(() => {
+          notification.style.opacity = '0';
+          notification.style.transition = 'opacity 0.5s';
+          setTimeout(() => notification.remove(), 500);
+        }, 4000);
+        
+        window.history.replaceState({}, '', window.location.pathname + '?userId=' + urlParams.get('userId'));
+      }, 300);
+    }
+  }
+});
+</script>

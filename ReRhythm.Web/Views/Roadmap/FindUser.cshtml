@@ -89,6 +89,12 @@
 
 @section Scripts {
 <script>
+  // Pre-fill with last used userId
+  const lastUserId = localStorage.getItem('reRhythmLastUserId');
+  if (lastUserId) {
+    document.getElementById('userId').value = lastUserId;
+  }
+  
   document.getElementById('findUserForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -116,7 +122,7 @@
       const result = await response.json();
       
       if (result.success) {
-        localStorage.setItem('reRhythmUserId', userId);
+        localStorage.setItem('reRhythmLastUserId', userId);
         window.location.href = result.redirectUrl;
       } else {
         btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
