@@ -79,16 +79,30 @@ Write-Host "Image pushed to ECR" -ForegroundColor Green
 # Step 5: Deploy CloudFormation Stack
 Write-Host "`nDeploying CloudFormation stack..." -ForegroundColor Yellow
 
-# Check if certificate exists
+# Auto-create HTTPS certificate if missing
 $ErrorActionPreference = "SilentlyContinue"
 $certArn = aws acm list-certificates --region $Region --query "CertificateSummaryList[?contains(DomainName, 'elb.amazonaws.com')].CertificateArn | [0]" --output text 2>&1
 $ErrorActionPreference = "Continue"
 
-if ($certArn -and $certArn -ne "None") {
-    Write-Host "Found existing certificate: $certArn" -ForegroundColor Green
+if (-not $certArn -or $certArn -eq "None") {
+    Write-Host "No certificate found. Creating self-signed certificate..." -ForegroundColor Yellow
+    
+    # Use OpenSSL (comes with Git for Windows)
+    $openssl = "C:\Program Files\Git\usr\bin\openssl.exe"
+    if (-not (Test-Path $openssl)) { $openssl = "openssl" }
+    
+    & $openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365 -subj "/CN=*.elb.amazonaws.com" 2>$null
+    
+    if (Test-Path cert.pem) {
+        $certArn = aws acm import-certificate --certificate fileb://cert.pem --private-key fileb://key.pem --region $Region --query CertificateArn --output text
+        Remove-Item cert.pem, key.pem -ErrorAction SilentlyContinue
+        Write-Host "Certificate created: $certArn" -ForegroundColor Green
+    } else {
+        Write-Host "Failed to create certificate. Deploying without HTTPS" -ForegroundColor Yellow
+        $certArn = ""
+    }
 } else {
-    Write-Host "No certificate found. Run .\setup-https.ps1 to enable HTTPS" -ForegroundColor Yellow
-    $certArn = ""
+    Write-Host "Found existing certificate: $certArn" -ForegroundColor Green
 }
 
 # Upload template to S3 bucket
