@@ -115,14 +115,22 @@
                          focus:outline-none focus:border-sky-500 focus:ring-1
                          focus:ring-sky-500 transition-colors">
             <option value="">Select Industry</option>
-            <option value="IT">Information Technology</option>
-            <option value="Healthcare">Healthcare</option>
+            <option value="IT">Information Technology & Software</option>
+            <option value="Healthcare">Healthcare & Life Sciences</option>
             <option value="Finance">Finance & Banking</option>
-            <option value="Manufacturing">Manufacturing</option>
+            <option value="Manufacturing">Manufacturing & Industrial</option>
+            <option value="Automotive">Automotive</option>
+            <option value="Aerospace">Aerospace & Defense</option>
+            <option value="Energy">Energy & Utilities</option>
+            <option value="Telecommunications">Telecommunications</option>
             <option value="Retail">Retail & E-commerce</option>
-            <option value="Education">Education</option>
-            <option value="Consulting">Consulting</option>
+            <option value="Education">Education & EdTech</option>
+            <option value="Consulting">Consulting & Professional Services</option>
             <option value="Media">Media & Entertainment</option>
+            <option value="RealEstate">Real Estate & Construction</option>
+            <option value="Logistics">Logistics & Supply Chain</option>
+            <option value="Hospitality">Hospitality & Tourism</option>
+            <option value="Government">Government & Public Sector</option>
           </select>
         </div>
 
@@ -136,6 +144,35 @@
                          focus:ring-sky-500 transition-colors">
             <option value="">Select role first</option>
           </select>
+        </div>
+
+        <!-- Hidden field for personality type -->
+        <input type="hidden" name="personalityType" id="personalityTypeInput" value="" />
+
+        <!-- Personality Test Button (before file upload) -->
+        <div class="mb-6">
+          <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-4 hover:border-sky-500/50 transition-colors">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-white font-semibold text-sm">Personalize Your Roadmap</p>
+                  <p class="text-slate-400 text-xs">2-min quiz • Get AI-tailored learning path</p>
+                </div>
+              </div>
+              <button type="button" id="startPersonalityTest" disabled
+                      class="px-4 py-2 bg-slate-600 text-white text-sm font-semibold rounded-lg cursor-not-allowed transition-colors">
+                Start Quiz
+              </button>
+            </div>
+            <div id="personalityResult" class="hidden mt-3 pt-3 border-t border-slate-700">
+              <p class="text-sm text-sky-300">✓ <span id="personalityType"></span></p>
+            </div>
+          </div>
         </div>
 
         <!-- Drag & Drop File Zone -->
@@ -220,6 +257,199 @@
   const userIdAvailable = document.getElementById('userIdAvailable');
   let checkTimeout;
   let isUserIdValid = false;
+  let personalityScores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+
+  // Personality Test Data (12 visual questions)
+  const personalityQuestions = [
+    { img: '🔧', text: 'Fix & Build Things', type: 'R', alt: 'Working with tools and machines' },
+    { img: '🔬', text: 'Analyze & Research', type: 'I', alt: 'Solving complex problems' },
+    { img: '🎨', text: 'Create & Design', type: 'A', alt: 'Artistic and creative work' },
+    { img: '🤝', text: 'Help & Teach Others', type: 'S', alt: 'Working with people' },
+    { img: '💼', text: 'Lead & Persuade', type: 'E', alt: 'Managing and influencing' },
+    { img: '📊', text: 'Organize & Plan', type: 'C', alt: 'Structured and detailed work' },
+    { img: '⚙️', text: 'Hands-On Projects', type: 'R', alt: 'Practical work' },
+    { img: '🧪', text: 'Experiment & Discover', type: 'I', alt: 'Scientific thinking' },
+    { img: '✍️', text: 'Write & Express', type: 'A', alt: 'Creative expression' },
+    { img: '👥', text: 'Collaborate & Support', type: 'S', alt: 'Teamwork' },
+    { img: '🎯', text: 'Set Goals & Achieve', type: 'E', alt: 'Results-driven' },
+    { img: '📋', text: 'Follow Systems', type: 'C', alt: 'Process-oriented' }
+  ];
+
+  const riasecTypes = {
+    R: { name: 'Realistic (Doer)', roles: 'Engineer, Developer, Technician', color: 'bg-blue-500' },
+    I: { name: 'Investigative (Thinker)', roles: 'Data Scientist, Researcher, Analyst', color: 'bg-purple-500' },
+    A: { name: 'Artistic (Creator)', roles: 'Designer, Content Creator, UX/UI', color: 'bg-pink-500' },
+    S: { name: 'Social (Helper)', roles: 'Teacher, HR, Customer Success', color: 'bg-green-500' },
+    E: { name: 'Enterprising (Persuader)', roles: 'Manager, Sales, Product Manager', color: 'bg-orange-500' },
+    C: { name: 'Conventional (Organizer)', roles: 'Accountant, Admin, Operations', color: 'bg-gray-500' }
+  };
+
+  // Start Personality Test
+  const startTestBtn = document.getElementById('startPersonalityTest');
+  const industrySelect = document.getElementById('industry');
+  const roleSelect = document.getElementById('targetRole');
+  const expInput = document.querySelector('[name="yearsOfExperience"]');
+
+  // Enable quiz button only when all required fields are filled
+  function checkQuizAvailability() {
+    const canTakeQuiz = isUserIdValid && 
+                        expInput.value && 
+                        industrySelect.value && 
+                        roleSelect.value;
+    
+    if (canTakeQuiz) {
+      startTestBtn.disabled = false;
+      startTestBtn.classList.remove('bg-slate-600', 'text-slate-400', 'cursor-not-allowed');
+      startTestBtn.classList.add('bg-sky-500', 'hover:bg-sky-600', 'text-white');
+    } else {
+      startTestBtn.disabled = true;
+      startTestBtn.classList.remove('bg-sky-500', 'hover:bg-sky-600', 'text-white');
+      startTestBtn.classList.add('bg-slate-600', 'text-slate-400', 'cursor-not-allowed');
+    }
+  }
+
+  userIdInput.addEventListener('input', checkQuizAvailability);
+  expInput.addEventListener('input', checkQuizAvailability);
+  industrySelect.addEventListener('change', checkQuizAvailability);
+  roleSelect.addEventListener('change', checkQuizAvailability);
+
+  startTestBtn.addEventListener('click', function() {
+    if (!this.disabled) showPersonalityModal();
+  });
+
+  function showPersonalityModal() {
+    const targetRole = roleSelect.value;
+    const industry = industrySelect.value;
+    const years = expInput.value;
+    
+    // Reset scores
+    personalityScores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-950/95 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+      <div class="max-w-4xl w-full">
+        <div class="glass-card rounded-2xl p-8 border border-slate-700">
+          <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-white mb-2">Personalize Your ${targetRole} Roadmap</h2>
+            <p class="text-slate-400">For ${industry} • ${years} years experience • Select activities you enjoy</p>
+            <div class="mt-4 flex justify-center gap-2">
+              ${Array(12).fill(0).map((_, i) => `<div class="w-2 h-2 rounded-full bg-slate-700" id="progress-${i}"></div>`).join('')}
+            </div>
+          </div>
+          <div id="questionContainer" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            ${personalityQuestions.map((q, i) => `
+              <button type="button" onclick="selectActivity(${i}, '${q.type}')" 
+                      class="activity-card p-6 bg-slate-800/60 hover:bg-slate-700/60 border-2 border-slate-700 hover:border-sky-500 rounded-xl transition-all duration-200 text-center group">
+                <div class="text-5xl mb-3">${q.img}</div>
+                <p class="text-white font-medium text-sm group-hover:text-sky-300">${q.text}</p>
+              </button>
+            `).join('')}
+          </div>
+          <div class="flex justify-between items-center">
+            <button type="button" onclick="closePersonalityModal()" class="px-6 py-2 text-slate-400 hover:text-white transition-colors">
+              Skip for now
+            </button>
+            <div class="flex flex-col items-end">
+              <p id="selectionError" class="text-xs text-red-400 mb-2 hidden">Please select at least 6 activities</p>
+              <button type="button" id="finishTest" onclick="attemptFinish()" class="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-xl transition-colors">
+                See My Results
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    window.currentModal = modal;
+    window.selectedCount = 0;
+  }
+
+  window.selectActivity = function(index, type) {
+    const progress = document.getElementById(`progress-${index}`);
+    const card = event.currentTarget;
+    
+    if (progress.classList.contains('bg-sky-500')) {
+      // Deselect
+      progress.classList.remove('bg-sky-500');
+      progress.classList.add('bg-slate-700');
+      card.classList.remove('border-sky-500', 'bg-sky-500/20');
+      card.classList.add('border-slate-700');
+      personalityScores[type]--;
+      window.selectedCount--;
+    } else {
+      // Select
+      progress.classList.remove('bg-slate-700');
+      progress.classList.add('bg-sky-500');
+      card.classList.remove('border-slate-700');
+      card.classList.add('border-sky-500', 'bg-sky-500/20');
+      personalityScores[type]++;
+      window.selectedCount++;
+    }
+    
+    // Enable finish button if at least 6 selected
+    const finishBtn = document.getElementById('finishTest');
+    if (window.selectedCount >= 6) {
+      finishBtn.classList.remove('bg-slate-600', 'hover:bg-slate-700');
+      finishBtn.classList.add('bg-sky-500', 'hover:bg-sky-600');
+    } else {
+      finishBtn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
+      finishBtn.classList.add('bg-slate-600', 'hover:bg-slate-700');
+    }
+  };
+
+  window.attemptFinish = function() {
+    if (window.selectedCount < 6) {
+      const errorMsg = document.getElementById('selectionError');
+      const btn = document.getElementById('finishTest');
+      errorMsg.classList.remove('hidden');
+      btn.classList.add('animate-shake');
+      setTimeout(() => {
+        btn.classList.remove('animate-shake');
+        errorMsg.classList.add('hidden');
+      }, 2000);
+      return;
+    }
+    finishPersonalityTest();
+  };
+
+  window.finishPersonalityTest = function() {
+    // Calculate top 2 types
+    const sorted = Object.entries(personalityScores)
+      .sort((a, b) => b[1] - a[1])
+      .filter(([_, score]) => score > 0)
+      .slice(0, 2);
+    
+    if (sorted.length === 0) return;
+    
+    const primaryType = sorted[0][0];
+    const secondaryType = sorted.length > 1 ? sorted[1][0] : null;
+    
+    const result = secondaryType 
+      ? `${riasecTypes[primaryType].name} + ${riasecTypes[secondaryType].name}`
+      : riasecTypes[primaryType].name;
+    
+    // Show personality type and target role context
+    const targetRole = roleSelect.value;
+    const industry = industrySelect.value;
+    
+    // Show result
+    document.getElementById('personalityType').textContent = `${result} • Tailored for ${targetRole} in ${industry}`;
+    document.getElementById('personalityResult').classList.remove('hidden');
+    document.getElementById('personalityTypeInput').value = `${primaryType}${secondaryType ? '-' + secondaryType : ''}`;
+    document.getElementById('startPersonalityTest').textContent = 'Retake Quiz';
+    document.getElementById('startPersonalityTest').classList.remove('bg-sky-500', 'hover:bg-sky-600');
+    document.getElementById('startPersonalityTest').classList.add('bg-slate-800', 'hover:bg-slate-700', 'text-white');;
+    
+    closePersonalityModal();
+  };
+
+  window.closePersonalityModal = function() {
+    if (window.currentModal) {
+      window.currentModal.remove();
+      window.currentModal = null;
+    }
+  };
 
   // Real-time userId validation
   userIdInput.addEventListener('input', function() {
@@ -273,10 +503,10 @@
   // Industry to roles mapping by experience level
   const rolesByIndustryAndExp = {
     'IT': {
-      junior: ['Junior Software Engineer', 'Associate Developer', 'Junior DevOps Engineer', 'Junior Data Analyst', 'QA Engineer', 'Technical Support Engineer'],
-      mid: ['Software Engineer', 'Cloud Engineer', 'DevOps Engineer', 'Data Engineer', 'Full Stack Developer', 'Backend Developer', 'Frontend Developer', 'Security Engineer'],
-      senior: ['Senior Software Engineer', 'Senior Cloud Architect', 'Senior DevOps Engineer', 'Lead Developer', 'Principal Engineer', 'Staff Engineer'],
-      leadership: ['Engineering Manager', 'Technical Director', 'VP of Engineering', 'CTO', 'Solutions Architect', 'Enterprise Architect']
+      junior: ['Junior Software Engineer', 'Associate Developer', 'Junior DevOps Engineer', 'Junior Data Analyst', 'QA Engineer', 'Technical Support Engineer', 'Junior ML Engineer', 'SOC Analyst', 'Junior Data Scientist'],
+      mid: ['Software Engineer', 'Cloud Engineer', 'DevOps Engineer', 'Data Engineer', 'Full Stack Developer', 'Backend Developer', 'Frontend Developer', 'Security Engineer', 'Machine Learning Engineer', 'AI Engineer', 'Data Scientist', 'Cybersecurity Analyst', 'Penetration Tester', 'NLP Engineer', 'Computer Vision Engineer'],
+      senior: ['Senior Software Engineer', 'Senior Cloud Architect', 'Senior DevOps Engineer', 'Lead Developer', 'Principal Engineer', 'Staff Engineer', 'Senior ML Engineer', 'Senior Data Scientist', 'Lead Security Architect', 'Principal Security Engineer'],
+      leadership: ['Engineering Manager', 'Technical Director', 'VP of Engineering', 'CTO', 'Solutions Architect', 'Enterprise Architect', 'Head of AI', 'VP of Data Science', 'CISO', 'Director of Security']
     },
     'Healthcare': {
       junior: ['Healthcare Coordinator', 'Clinical Assistant', 'Junior Healthcare Analyst'],
@@ -286,7 +516,7 @@
     },
     'Finance': {
       junior: ['Junior Financial Analyst', 'Associate Analyst', 'Junior Accountant'],
-      mid: ['Financial Analyst', 'Risk Manager', 'Compliance Officer', 'Accountant', 'Auditor'],
+      mid: ['Financial Analyst', 'Risk Manager', 'Compliance Officer', 'Accountant', 'Auditor', 'Investment Analyst'],
       senior: ['Senior Financial Analyst', 'Senior Risk Manager', 'Investment Banker', 'Portfolio Manager'],
       leadership: ['Finance Director', 'VP of Finance', 'CFO', 'Chief Risk Officer', 'Head of Investment Banking']
     },
@@ -295,6 +525,30 @@
       mid: ['Production Manager', 'Process Engineer', 'Manufacturing Engineer', 'Quality Assurance Manager'],
       senior: ['Senior Production Manager', 'Senior Manufacturing Engineer', 'Supply Chain Manager'],
       leadership: ['Operations Director', 'VP of Operations', 'Plant Manager', 'Chief Operations Officer']
+    },
+    'Automotive': {
+      junior: ['Junior Automotive Engineer', 'Test Engineer', 'Quality Inspector'],
+      mid: ['Automotive Engineer', 'Vehicle Dynamics Engineer', 'Powertrain Engineer', 'Design Engineer'],
+      senior: ['Senior Automotive Engineer', 'Lead Design Engineer', 'Principal Engineer'],
+      leadership: ['Engineering Director', 'VP of Engineering', 'Chief Engineer', 'Head of R&D']
+    },
+    'Aerospace': {
+      junior: ['Junior Aerospace Engineer', 'Systems Engineer', 'Test Engineer'],
+      mid: ['Aerospace Engineer', 'Avionics Engineer', 'Propulsion Engineer', 'Structural Engineer'],
+      senior: ['Senior Aerospace Engineer', 'Lead Systems Engineer', 'Principal Engineer'],
+      leadership: ['Engineering Director', 'VP of Engineering', 'Chief Engineer', 'Program Manager']
+    },
+    'Energy': {
+      junior: ['Junior Energy Analyst', 'Field Engineer', 'Operations Technician'],
+      mid: ['Energy Engineer', 'Renewable Energy Specialist', 'Power Systems Engineer', 'Project Engineer'],
+      senior: ['Senior Energy Engineer', 'Lead Project Engineer', 'Energy Consultant'],
+      leadership: ['Director of Operations', 'VP of Engineering', 'Chief Sustainability Officer', 'Head of Energy']
+    },
+    'Telecommunications': {
+      junior: ['Junior Network Engineer', 'Telecom Technician', 'Support Engineer'],
+      mid: ['Network Engineer', 'Telecom Engineer', 'RF Engineer', 'Systems Engineer'],
+      senior: ['Senior Network Architect', 'Lead Telecom Engineer', 'Principal Engineer'],
+      leadership: ['Director of Network Operations', 'VP of Engineering', 'CTO', 'Head of Infrastructure']
     },
     'Retail': {
       junior: ['Assistant Store Manager', 'Retail Coordinator', 'Junior Merchandiser'],
@@ -319,6 +573,30 @@
       mid: ['Content Creator', 'Digital Marketing Manager', 'Social Media Manager', 'Graphic Designer', 'UX/UI Designer'],
       senior: ['Senior Content Creator', 'Senior UX/UI Designer', 'Video Producer', 'Creative Lead'],
       leadership: ['Creative Director', 'VP of Marketing', 'Chief Marketing Officer', 'Head of Digital']
+    },
+    'RealEstate': {
+      junior: ['Junior Property Manager', 'Real Estate Coordinator', 'Leasing Agent'],
+      mid: ['Property Manager', 'Real Estate Analyst', 'Construction Manager', 'Project Manager'],
+      senior: ['Senior Property Manager', 'Senior Real Estate Analyst', 'Development Manager'],
+      leadership: ['Director of Real Estate', 'VP of Development', 'Chief Investment Officer', 'Head of Property Management']
+    },
+    'Logistics': {
+      junior: ['Logistics Coordinator', 'Supply Chain Analyst', 'Warehouse Supervisor'],
+      mid: ['Logistics Manager', 'Supply Chain Manager', 'Operations Manager', 'Procurement Manager'],
+      senior: ['Senior Logistics Manager', 'Senior Supply Chain Manager', 'Distribution Manager'],
+      leadership: ['Director of Logistics', 'VP of Supply Chain', 'Chief Supply Chain Officer', 'Head of Operations']
+    },
+    'Hospitality': {
+      junior: ['Front Desk Manager', 'Event Coordinator', 'Guest Services Associate'],
+      mid: ['Hotel Manager', 'Restaurant Manager', 'Event Manager', 'Operations Manager'],
+      senior: ['Senior Hotel Manager', 'Regional Manager', 'Director of Operations'],
+      leadership: ['General Manager', 'VP of Operations', 'Director of Hospitality', 'Chief Experience Officer']
+    },
+    'Government': {
+      junior: ['Policy Analyst', 'Program Coordinator', 'Administrative Officer'],
+      mid: ['Policy Advisor', 'Program Manager', 'Public Affairs Specialist', 'Compliance Officer'],
+      senior: ['Senior Policy Advisor', 'Senior Program Manager', 'Director of Programs'],
+      leadership: ['Deputy Director', 'Director', 'Assistant Secretary', 'Chief of Staff']
     }
   };
 

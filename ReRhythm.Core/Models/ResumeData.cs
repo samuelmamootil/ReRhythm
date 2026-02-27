@@ -12,4 +12,14 @@ public class ResumeData
     public string Education { get; set; } = string.Empty;
     public int YearsExperience { get; set; }
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+    public string ContactInfo { get; set; } = string.Empty;
+    public List<WorkExperience> WorkHistory { get; set; } = [];
+}
+
+public class WorkExperience
+{
+    public string Company { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+    public string Duration { get; set; } = string.Empty;
+    public List<string> Responsibilities { get; set; } = [];
 }

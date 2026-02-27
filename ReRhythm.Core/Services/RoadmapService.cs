@@ -26,16 +26,29 @@ public class RoadmapService
         string targetRole,
         string industry,
         int yearsOfExperience,
+        string? personalityType,
         CancellationToken ct = default)
     {
-        // Build the RAG query for roadmap generation
+        var personalityContext = string.IsNullOrEmpty(personalityType) ? "" : $"""
+            
+            User's personality profile (RIASEC): {personalityType}
+            Tailor the learning approach and project types to match their natural strengths and interests.
+            """;
+
         var query = $"""
             Generate a 28-day micro-sprint roadmap for someone targeting the role of {targetRole}.
+            
+            Context:
+            - Target Role: {targetRole}
+            - Industry: {industry}
+            - Years of Experience: {yearsOfExperience}
+            {personalityContext}
+            
             Create 4 weekly modules with:
             - Daily 15-minute learning tasks
             - Skill gap identification based on the resume
             - AWS certification milestones
-            - Portfolio project suggestions
+            - Portfolio project suggestions aligned with their personality and learning style
             - Interview preparation checkpoints
             
             Structure output as a milestone tracker showing skills unlocked per module.
@@ -88,6 +101,11 @@ public class RoadmapService
         }
 
         plan.UserId = userId;
+        plan.OriginalResumeText = resumeText;
+        plan.TargetRole = targetRole;
+        plan.Industry = industry;
+        plan.YearsOfExperience = yearsOfExperience;
+        plan.PersonalityType = personalityType;
         plan.Citations = ragResponse.Citations;
 
         // Persist to DynamoDB
@@ -125,7 +143,11 @@ public class RoadmapPlan
 {
     public string UserId { get; set; } = string.Empty;
     public string TargetRole { get; set; } = string.Empty;
+    public string Industry { get; set; } = string.Empty;
+    public int YearsOfExperience { get; set; }
+    public string? PersonalityType { get; set; }
     public string? RawContent { get; set; }
+    public string OriginalResumeText { get; set; } = string.Empty;
     public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
     public List<WeeklyModule> Modules { get; set; } = [];
     public List<CitationSource> Citations { get; set; } = [];

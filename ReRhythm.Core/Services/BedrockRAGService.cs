@@ -25,7 +25,8 @@ public class BedrockRAGService
     public async Task<RAGResponse> RetrieveAndGenerateAsync(string userQuery, string resumeContext, string targetRole, string industry, int yearsOfExperience, CancellationToken ct = default)
     {
         var prompt = BuildAugmentedQuery(userQuery, resumeContext, targetRole, industry, yearsOfExperience);
-        _logger.LogInformation("Invoking Claude for role: {Role}, ModelId: {ModelId}", targetRole, ModelId);
+        _logger.LogInformation("Invoking Claude - Role: {Role}, Industry: {Industry}, Experience: {Years} years, ModelId: {ModelId}", 
+            targetRole, industry, yearsOfExperience, ModelId);
 
         var requestBody = JsonSerializer.Serialize(new
         {

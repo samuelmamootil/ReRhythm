@@ -21,6 +21,8 @@ builder.Services.AddScoped<BedrockRAGService>();          // ✅ Registered once
 builder.Services.AddScoped<RoadmapService>();
 builder.Services.AddScoped<DynamoDbService>();
 builder.Services.AddScoped<ResumeGeneratorService>();
+builder.Services.AddScoped<CertificateService>();
+builder.Services.AddScoped<BadgeService>();
 
 // ── MVC ───────────────────────────────────────────────
 builder.Services.AddControllersWithViews();

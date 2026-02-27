@@ -72,16 +72,21 @@
           <path d="M9 5l7 7-7 7"/>
         </svg>
       </a>
-      <a asp-controller="Roadmap" asp-action="DownloadResume" asp-route-userId="@Model.UserId"
-         class="glass-card rounded-xl p-4 border border-slate-700 hover:border-sky-500 transition-colors flex items-center gap-4">
+      <a asp-controller="Gamification" asp-action="Dashboard" asp-route-userId="@Model.UserId"
+         class="glass-card rounded-xl p-4 border border-slate-700 hover:border-sky-500 transition-colors flex items-center gap-4 relative">
         <div class="w-12 h-12 bg-sky-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+            <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
           </svg>
         </div>
         <div class="flex-1">
-          <h3 class="font-semibold text-white mb-1">Get Resume PDF</h3>
-          <p class="text-xs text-slate-400">Professional ATS-friendly format</p>
+          <div class="flex items-center gap-2 mb-1">
+            <h3 class="font-semibold text-white">View Badges</h3>
+            <span class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-emerald-500 text-white text-xs font-bold rounded-full">
+              @(ViewBag.BadgeCount ?? 0)
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">See your achievements</p>
         </div>
         <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M9 5l7 7-7 7"/>

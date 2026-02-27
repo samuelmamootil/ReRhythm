@@ -15,6 +15,7 @@ public class DynamoDbService
 
     private string RoadmapTable => _config["ReRhythm:RoadmapTableName"]!;
     private string LessonTable  => _config["ReRhythm:LessonTableName"]!;
+    private string BadgeTable   => _config["ReRhythm:BadgeTableName"]!;
 
     public DynamoDbService(IAmazonDynamoDB dynamo, IConfiguration config, ILogger<DynamoDbService> logger)
     {
@@ -32,6 +33,9 @@ public class DynamoDbService
             ["userId"]      = new AttributeValue { S = plan.UserId },
             ["createdAt"]   = new AttributeValue { S = plan.GeneratedAt.ToString("O") },
             ["targetRole"]  = new AttributeValue { S = plan.TargetRole },
+            ["industry"]    = new AttributeValue { S = plan.Industry },
+            ["yearsOfExperience"] = new AttributeValue { N = plan.YearsOfExperience.ToString() },
+            ["personalityType"] = new AttributeValue { S = plan.PersonalityType ?? "" },
             ["roadmapJson"] = new AttributeValue { S = JsonSerializer.Serialize(plan) },
             // TTL: keep active profiles for 30 days per privacy policy
             ["ttl"] = new AttributeValue
@@ -196,5 +200,66 @@ public class DynamoDbService
         }, ct);
 
         return response.Count ?? 0;
+    }
+
+    // ── Badge Achievement Methods ──────────────────────────────────────────────
+
+    public async Task SaveBadgeAchievementAsync(BadgeAchievement badge, CancellationToken ct = default)
+    {
+        var item = new Dictionary<string, AttributeValue>
+        {
+            ["userId"]      = new AttributeValue { S = badge.UserId },
+            ["badgeId"]     = new AttributeValue { S = badge.BadgeId },
+            ["badgeName"]   = new AttributeValue { S = badge.BadgeName },
+            ["badgeIcon"]   = new AttributeValue { S = badge.BadgeIcon },
+            ["unlockedAt"]  = new AttributeValue { S = badge.UnlockedAt.ToString("O") },
+            ["lessonsCompletedAtUnlock"] = new AttributeValue { N = badge.LessonsCompletedAtUnlock.ToString() },
+            ["progressPercentAtUnlock"] = new AttributeValue { N = badge.ProgressPercentAtUnlock.ToString() }
+        };
+
+        await _dynamo.PutItemAsync(new PutItemRequest
+        {
+            TableName = BadgeTable,
+            Item = item
+        }, ct);
+    }
+
+    public async Task<List<BadgeAchievement>> GetUserBadgesAsync(string userId, CancellationToken ct = default)
+    {
+        var response = await _dynamo.QueryAsync(new QueryRequest
+        {
+            TableName = BadgeTable,
+            KeyConditionExpression = "userId = :uid",
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                [":uid"] = new AttributeValue { S = userId }
+            }
+        }, ct);
+
+        return response.Items.Select(item => new BadgeAchievement
+        {
+            UserId = item["userId"].S,
+            BadgeId = item["badgeId"].S,
+            BadgeName = item["badgeName"].S,
+            BadgeIcon = item["badgeIcon"].S,
+            UnlockedAt = DateTime.Parse(item["unlockedAt"].S),
+            LessonsCompletedAtUnlock = int.Parse(item["lessonsCompletedAtUnlock"].N),
+            ProgressPercentAtUnlock = int.Parse(item["progressPercentAtUnlock"].N)
+        }).ToList();
+    }
+
+    public async Task<bool> HasBadgeAsync(string userId, string badgeId, CancellationToken ct = default)
+    {
+        var response = await _dynamo.GetItemAsync(new GetItemRequest
+        {
+            TableName = BadgeTable,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                ["userId"]  = new AttributeValue { S = userId },
+                ["badgeId"] = new AttributeValue { S = badgeId }
+            }
+        }, ct);
+
+        return response.IsItemSet;
     }
 }

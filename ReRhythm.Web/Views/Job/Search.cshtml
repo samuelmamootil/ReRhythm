@@ -1,0 +1,266 @@
+@model ReRhythm.Core.Services.RoadmapPlan
+@{
+    ViewData["Title"] = "Job Opportunities";
+}
+
+<div class="hero-bg min-h-screen px-6 py-10">
+
+  <!-- Hero Header -->
+  <div class="text-center pt-10 pb-6 px-4">
+    <div class="flex justify-center">
+      <img src="~/rhythmlogo.png" alt="ReRhythm Logo" class="h-32 page-logo m-0 p-0" />
+    </div>
+    <h1 class="text-4xl font-extrabold mb-2 leading-tight">
+      Job <span class="beat-text">Opportunities</span>
+    </h1>
+    <p class="text-slate-400 text-lg max-w-2xl mx-auto">
+      Roles matching your profile: <span class="text-sky-400 font-semibold">@Model.TargetRole</span> in <span class="text-sky-400 font-semibold">@Model.Industry</span>
+    </p>
+  </div>
+
+  <!-- Step Progress Bar -->
+  <partial name="_StepProgress" model="(Model.UserId, 4)" />
+
+  <!-- Header -->
+  <div class="max-w-6xl mx-auto mb-8">
+    <div class="flex items-center justify-between mb-6">
+      <a asp-controller="Roadmap" asp-action="Tracker" asp-route-userId="@Model.UserId"
+         class="text-slate-400 hover:text-white transition-colors">
+        ← Back to Tracker
+      </a>
+    </div>
+  </div>
+
+  <!-- Job Listings -->
+  <div class="max-w-6xl mx-auto">
+    <div id="jobListings" class="space-y-6">
+      <!-- Jobs will be loaded here -->
+      <div class="text-center py-12">
+        <svg class="w-12 h-12 text-sky-400 animate-spin mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+        </svg>
+        <p class="text-slate-400">Loading job opportunities...</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const targetRole = '@Model.TargetRole';
+  const industry = '@Model.Industry';
+  const yearsOfExperience = @Model.YearsOfExperience;
+  const personalityType = '@Model.PersonalityType';
+  const currentSkills = @Html.Raw(Json.Serialize(Model.SkillsIdentified));
+  const acquiredSkills = @Html.Raw(Json.Serialize(Model.SkillsToAcquire));
+  const allSkills = [...currentSkills, ...acquiredSkills];
+
+  // Mock job data - In production, this would come from LinkedIn/Indeed APIs
+  const mockJobs = [
+    {
+      title: targetRole,
+      company: 'Amazon Web Services',
+      location: 'Seattle, WA',
+      type: 'Full-time',
+      experience: `${yearsOfExperience}+ years`,
+      salary: '$120K - $180K',
+      posted: '2 days ago',
+      requirements: [
+        `${yearsOfExperience}+ years of experience in ${targetRole}`,
+        `Strong knowledge of ${allSkills.slice(0, 3).join(', ')}`,
+        'Experience with CI/CD pipelines and DevOps practices',
+        'Excellent problem-solving and communication skills',
+        'Bachelor\'s degree in Computer Science or related field'
+      ],
+      visaStatus: 'US Citizen, Green Card, or H1B sponsorship available',
+      applyUrl: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(targetRole + ' ' + allSkills.slice(0, 2).join(' '))}&location=United%20States`,
+      source: 'LinkedIn'
+    },
+    {
+      title: targetRole,
+      company: 'Microsoft',
+      location: 'Redmond, WA',
+      type: 'Full-time',
+      experience: `${yearsOfExperience}+ years`,
+      salary: '$130K - $190K',
+      posted: '3 days ago',
+      requirements: [
+        `${yearsOfExperience}+ years in ${industry} industry`,
+        `Proficiency in ${allSkills.slice(1, 4).join(', ')}`,
+        'Strong programming and system design skills',
+        'Experience with agile development methodologies',
+        'Master\'s degree preferred'
+      ],
+      visaStatus: 'US Citizen or Green Card required',
+      applyUrl: `https://www.indeed.com/jobs?q=${encodeURIComponent(targetRole + ' ' + allSkills.slice(0, 2).join(' '))}&l=United+States`,
+      source: 'Indeed'
+    },
+    {
+      title: `Senior ${targetRole}`,
+      company: 'Google Cloud',
+      location: 'Mountain View, CA',
+      type: 'Full-time',
+      experience: `${yearsOfExperience + 2}+ years`,
+      salary: '$150K - $220K',
+      posted: '1 week ago',
+      requirements: [
+        `${yearsOfExperience + 2}+ years of relevant experience`,
+        `Deep understanding of ${allSkills.slice(2, 5).join(', ')}`,
+        'Experience leading technical projects and mentoring teams',
+        'Strong analytical and problem-solving abilities',
+        'Proven track record of delivering scalable solutions'
+      ],
+      visaStatus: 'H1B sponsorship available',
+      applyUrl: `https://www.linkedin.com/jobs/search/?keywords=Senior%20${encodeURIComponent(targetRole + ' ' + allSkills.slice(0, 2).join(' '))}&location=United%20States`,
+      source: 'LinkedIn'
+    },
+    {
+      title: targetRole,
+      company: 'Meta',
+      location: 'Menlo Park, CA',
+      type: 'Full-time',
+      experience: `${yearsOfExperience}+ years`,
+      salary: '$140K - $200K',
+      posted: '5 days ago',
+      requirements: [
+        `${yearsOfExperience}+ years of industry experience`,
+        `Experience with ${allSkills.slice(0, 3).join(', ')}`,
+        'Strong coding skills and system design knowledge',
+        'Ability to work in fast-paced environment',
+        'BS/MS in Computer Science or equivalent'
+      ],
+      visaStatus: 'US Citizen, Green Card, or visa sponsorship',
+      applyUrl: `https://www.indeed.com/jobs?q=${encodeURIComponent(targetRole + ' ' + allSkills.slice(0, 2).join(' '))}&l=California`,
+      source: 'Indeed'
+    },
+    {
+      title: `Lead ${targetRole}`,
+      company: 'Salesforce',
+      location: 'San Francisco, CA',
+      type: 'Full-time',
+      experience: `${yearsOfExperience + 3}+ years`,
+      salary: '$160K - $230K',
+      posted: '4 days ago',
+      requirements: [
+        `${yearsOfExperience + 3}+ years of leadership experience`,
+        `Expertise in ${allSkills.slice(1, 4).join(', ')}`,
+        'Strong communication and stakeholder management skills',
+        'Experience with Salesforce ecosystem preferred',
+        'Track record of building high-performing teams'
+      ],
+      visaStatus: 'US Citizen or Green Card preferred',
+      applyUrl: `https://www.linkedin.com/jobs/search/?keywords=Lead%20${encodeURIComponent(targetRole + ' ' + allSkills.slice(0, 2).join(' '))}&location=San%20Francisco`,
+      source: 'LinkedIn'
+    },
+    {
+      title: targetRole,
+      company: 'IBM',
+      location: 'Remote',
+      type: 'Full-time',
+      experience: `${yearsOfExperience}+ years`,
+      salary: '$110K - $170K',
+      posted: '1 week ago',
+      requirements: [
+        `${yearsOfExperience}+ years in ${industry} sector`,
+        `Experience with ${allSkills.slice(2, 5).join(', ')}`,
+        'Strong analytical and technical documentation skills',
+        'Ability to work independently in remote environment',
+        'Relevant certifications preferred'
+      ],
+      visaStatus: 'All visa types considered',
+      applyUrl: `https://www.indeed.com/jobs?q=${encodeURIComponent(targetRole + ' ' + allSkills.slice(0, 2).join(' '))}&l=Remote`,
+      source: 'Indeed'
+    }
+  ];
+
+  function renderJobs() {
+    const container = document.getElementById('jobListings');
+    container.innerHTML = mockJobs.map(job => `
+      <div class="glass-card rounded-2xl p-6 border border-slate-700 hover:border-sky-500 transition-all duration-300">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <h3 class="text-xl font-bold text-white">${job.title}</h3>
+              <span class="text-xs px-3 py-1 rounded-full ${job.source === 'LinkedIn' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'}">
+                ${job.source}
+              </span>
+            </div>
+            <p class="text-sky-400 font-semibold mb-2">${job.company}</p>
+            <div class="flex flex-wrap gap-3 text-sm text-slate-400">
+              <span class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                ${job.location}
+              </span>
+              <span class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                ${job.type}
+              </span>
+              <span class="flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                ${job.posted}
+              </span>
+            </div>
+          </div>
+          <a href="${job.applyUrl}" target="_blank" 
+             class="glow-btn px-6 py-3 rounded-xl text-sm font-semibold text-white flex items-center gap-2">
+            Apply Now
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+          <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+            <p class="text-xs text-slate-400 mb-1">Experience Required</p>
+            <p class="text-white font-semibold">${job.experience}</p>
+          </div>
+          <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+            <p class="text-xs text-slate-400 mb-1">Salary Range</p>
+            <p class="text-white font-semibold">${job.salary}</p>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <p class="text-sm font-semibold text-sky-400 mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+            Top 5 Requirements
+          </p>
+          <ul class="space-y-2">
+            ${job.requirements.map(req => `
+              <li class="text-sm text-slate-300 flex items-start gap-2">
+                <span class="text-sky-400 mt-1">•</span>
+                <span>${req}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
+            </svg>
+            <div>
+              <p class="text-xs text-slate-400">Visa Status</p>
+              <p class="text-sm text-white font-semibold">${job.visaStatus}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Load jobs on page load
+  setTimeout(renderJobs, 1000);
+</script>

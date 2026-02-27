@@ -38,6 +38,7 @@ public class ResumeController : Controller
         [FromForm] string userId,
         [FromForm] string industry,
         [FromForm] int yearsOfExperience,
+        [FromForm] string? personalityType,
         CancellationToken ct)
     {
         try
@@ -72,7 +73,7 @@ public class ResumeController : Controller
             stream, resume.FileName, userId, ct);
 
             var plan = await _roadmap.GenerateRoadmapAsync(
-            userId, resumeText, targetRole, industry, yearsOfExperience, ct);
+                userId, resumeText, targetRole, industry, yearsOfExperience, personalityType, ct);
 
             return Json(new { success = true, redirectUrl = Url.Action("Analysis", new { userId }) });
         }

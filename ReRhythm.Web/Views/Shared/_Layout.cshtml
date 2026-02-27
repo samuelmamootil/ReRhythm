@@ -16,6 +16,7 @@
     body.light-mode .text-slate-300 { color: #334155 !important; }
     body.light-mode .text-slate-500 { color: #64748b !important; }
     body.light-mode .text-sky-400 { color: #0284c7 !important; }
+    body.light-mode .text-sky-300 { color: #0369a1 !important; }
     body.light-mode .text-emerald-400 { color: #059669 !important; }
     body.light-mode .text-red-300 { color: #dc2626 !important; }
     body.light-mode .bg-slate-800 { background-color: #e2e8f0 !important; }
@@ -70,6 +71,14 @@
     }
     .hero-bg {
       background: radial-gradient(ellipse at 50% 0%, rgba(56,189,248,0.08) 0%, transparent 70%);
+    }
+    @@keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    .animate-shake {
+      animation: shake 0.5s;
     }
   </style>
 </head>
