@@ -1,0 +1,46 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+
+# IDE files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+Assets/
+
+# Test files
+**/TestResults/
+**/*Tests/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CloudFormation templates (not needed in container)
+*.yaml
+*.yml
+!appsettings*.json
+
+# Scripts
+*.sh
+*.ps1
+
+# Misc
+LICENSE
+CODE_OF_CONDUCT.md
+SECURITY.md
