@@ -17,12 +17,18 @@ builder.Services.AddAWSService<IAmazonBedrockRuntime>();  // ✅ Now resolves co
 
 // ── App Services ──────────────────────────────────────
 builder.Services.AddScoped<TextractService>();
-builder.Services.AddScoped<BedrockRAGService>();          // ✅ Registered once only
+builder.Services.AddScoped<BedrockRAGService>();
 builder.Services.AddScoped<RoadmapService>();
 builder.Services.AddScoped<DynamoDbService>();
 builder.Services.AddScoped<ResumeGeneratorService>();
 builder.Services.AddScoped<CertificateService>();
 builder.Services.AddScoped<BadgeService>();
+builder.Services.AddScoped<ResumeBuilderService>(sp => 
+    new ResumeBuilderService(
+        sp.GetRequiredService<IAmazonBedrockRuntime>(),
+        "anthropic.claude-sonnet-4-20250514-v1:0"
+    )
+);
 
 // ── MVC ───────────────────────────────────────────────
 builder.Services.AddControllersWithViews();

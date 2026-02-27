@@ -4,7 +4,7 @@ using ReRhythm.Core.Models;
 
 namespace ReRhythm.Web.Controllers;
 
-public class RoadmapController : Controller
+public partial class RoadmapController : Controller
 {
     private readonly RoadmapService _roadmapService;
     private readonly DynamoDbService _dynamoDb;

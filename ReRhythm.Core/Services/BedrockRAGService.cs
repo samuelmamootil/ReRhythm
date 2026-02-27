@@ -12,7 +12,7 @@ public class BedrockRAGService
     private readonly IConfiguration _config;
     private readonly ILogger<BedrockRAGService> _logger;
 
-    private string ModelId => _config["ReRhythm:BedrockModelId"] ?? "anthropic.claude-3-5-sonnet-20241022-v2:0";
+    private string ModelId => _config["ReRhythm:BedrockModelId"] ?? "us.anthropic.claude-sonnet-4-20250514-v1:0";
     private int MaxTokens => int.TryParse(_config["ReRhythm:MaxTokens"], out var v) ? v : 4096;
 
     public BedrockRAGService(IAmazonBedrockRuntime bedrockRuntime, IConfiguration config, ILogger<BedrockRAGService> logger)
