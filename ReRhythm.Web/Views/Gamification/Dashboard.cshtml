@@ -96,7 +96,7 @@
         <p class="text-xs text-slate-500 mt-2">Share this link with friends who might benefit from career coaching</p>
       </div>
 
-      <div class="grid md:grid-cols-4 gap-4">
+      <div class="grid md:grid-cols-3 gap-4">
         <button onclick="shareToLinkedIn()"
                 class="flex items-center justify-center gap-2 px-6 py-3 bg-[#0077b5] hover:bg-[#006399] text-white font-semibold rounded-xl transition-colors">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -110,13 +110,6 @@
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
           </svg>
           X (Twitter)
-        </button>
-        <button onclick="shareToInstagram()"
-                class="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 text-white font-semibold rounded-xl transition-colors">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-          </svg>
-          Instagram
         </button>
         <button onclick="shareViaEmail()"
                 class="flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-colors">
@@ -155,24 +148,33 @@
 <script>
   const userId = '@Model.UserId';
   const targetRole = '@Model.TargetRole';
-  const completedCount = @completedCount;
-  const totalLessons = @totalLessons;
-  const progressPercent = @progressPercent;
+  const completedCount = @(ViewBag.CompletedCount ?? 0);
+  const totalLessons = @(ViewBag.TotalLessons ?? 0);
+  const progressPercent = @(ViewBag.ProgressPercent ?? 0);
 
-  // Badge definitions with unlock requirements
+  console.log('Dashboard loaded');
+  console.log('userId:', userId);
+  console.log('targetRole:', targetRole);
+  console.log('completedCount:', completedCount);
+  console.log('totalLessons:', totalLessons);
+  console.log('progressPercent:', progressPercent);
+
   const badges = [
-    { id: 'first-step', name: 'First Step', icon: '🚀', description: 'Completed your first lesson', requirement: 'Complete 1 lesson', unlocked: completedCount >= 1 },
-    { id: 'week-warrior', name: 'Week Warrior', icon: '⚡', description: 'Completed 7 lessons', requirement: 'Complete 7 lessons', unlocked: completedCount >= 7 },
-    { id: 'halfway-hero', name: 'Halfway Hero', icon: '🎯', description: 'Reached 50% completion', requirement: 'Reach 50% progress', unlocked: progressPercent >= 50 },
-    { id: 'sprint-master', name: 'Sprint Master', icon: '🏃', description: 'Completed 21 lessons', requirement: 'Complete 21 lessons', unlocked: completedCount >= 21 },
-    { id: 'graduate', name: 'Graduate', icon: '🎓', description: 'Completed all 28 lessons', requirement: 'Complete all 28 lessons', unlocked: progressPercent >= 100 },
-    { id: 'skill-builder', name: 'Skill Builder', icon: '🛠️', description: 'Acquired 5+ new skills', requirement: 'Complete 14 lessons', unlocked: completedCount >= 14 }
+    { id: 'first-step', name: 'First Step', icon: '\uD83D\uDE80', description: 'Completed your first lesson', requirement: 'Complete 1 lesson', unlocked: completedCount >= 1 },
+    { id: 'week-warrior', name: 'Week Warrior', icon: '\u26A1', description: 'Completed 7 lessons', requirement: 'Complete 7 lessons', unlocked: completedCount >= 7 },
+    { id: 'halfway-hero', name: 'Halfway Hero', icon: '\uD83C\uDFAF', description: 'Reached 50% completion', requirement: 'Reach 50% progress', unlocked: progressPercent >= 50 },
+    { id: 'sprint-master', name: 'Sprint Master', icon: '\uD83C\uDFC3', description: 'Completed 21 lessons', requirement: 'Complete 21 lessons', unlocked: completedCount >= 21 },
+    { id: 'graduate', name: 'Graduate', icon: '\uD83C\uDF93', description: 'Completed all 28 lessons', requirement: 'Complete all 28 lessons', unlocked: progressPercent >= 100 },
+    { id: 'skill-builder', name: 'Skill Builder', icon: '\uD83D\uDEE0', description: 'Acquired 5+ new skills', requirement: 'Complete 14 lessons', unlocked: completedCount >= 14 }
   ];
 
   function renderBadges() {
+    console.log('renderBadges called');
     const container = document.getElementById('badgesContainer');
+    const badgeCountEl = document.getElementById('badgeCount');
     const earnedCount = badges.filter(b => b.unlocked).length;
-    document.getElementById('badgeCount').textContent = earnedCount;
+    console.log('Earned badges:', earnedCount);
+    badgeCountEl.textContent = earnedCount;
 
     container.innerHTML = badges.map(badge => {
       const progress = getProgress(badge);
@@ -236,7 +238,7 @@
   }
 
   function shareBadge(badgeId, badgeName, badgeIcon) {
-    const text = `Just earned the "${badgeName}" ${badgeIcon} badge on ReRhythm!\n\nI'm ${progressPercent}% through my 28-day ${targetRole} career development journey.\n\nCheck it out: https://rerhythm.com?ref=${userId}`;
+    const text = `Just earned the "${badgeName}" badge on ReRhythm!\n\nI'm ${progressPercent}% through my 28-day ${targetRole} career development journey.\n\nCheck it out: https://rerhythm.com?ref=${userId}`;
     
     if (navigator.share) {
       navigator.share({ text });
@@ -248,17 +250,33 @@
 
   function copyReferralLink() {
     const input = document.getElementById('referralLink');
-    input.select();
-    document.execCommand('copy');
-    
-    const btn = event.target;
+    const btn = event.currentTarget;
     const originalText = btn.textContent;
-    btn.textContent = 'Copied!';
-    btn.classList.add('bg-emerald-500');
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.classList.remove('bg-emerald-500');
-    }, 2000);
+    
+    input.select();
+    input.setSelectionRange(0, 99999); // For mobile
+    
+    navigator.clipboard.writeText(input.value).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
+      btn.classList.add('bg-emerald-500');
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('bg-emerald-500');
+        btn.classList.add('bg-sky-500', 'hover:bg-sky-600');
+      }, 2000);
+    }).catch(() => {
+      // Fallback for older browsers
+      document.execCommand('copy');
+      btn.textContent = 'Copied!';
+      btn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
+      btn.classList.add('bg-emerald-500');
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('bg-emerald-500');
+        btn.classList.add('bg-sky-500', 'hover:bg-sky-600');
+      }, 2000);
+    });
   }
 
   function shareToLinkedIn() {
@@ -274,19 +292,7 @@
   }
 
   function shareToInstagram() {
-    const text = `Leveling up my career with ReRhythm—AI-powered 28-day roadmap for ${targetRole}. Link in bio: rerhythm.com?ref=${userId}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: 'ReRhythm Career Development',
-        text: text
-      }).catch(err => console.log('Share cancelled'));
-    } else {
-      // Fallback: copy text to clipboard
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Text copied! Open Instagram and paste in your story or post.');
-      });
-    }
+    // Removed - Instagram sharing not supported
   }
 
   function shareViaEmail() {
@@ -296,5 +302,8 @@
   }
 
   // Initialize
+  console.log('Initializing badges...');
+  console.log('Completed:', completedCount, 'Total:', totalLessons, 'Progress:', progressPercent + '%');
   renderBadges();
+  console.log('Badges rendered');
 </script>

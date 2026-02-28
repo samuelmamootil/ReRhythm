@@ -24,38 +24,45 @@ public class ResumeBuilderService
         int yearsOfExperience,
         List<string> completedProjects)
     {
-        var prompt = BuildResumePrompt(originalResumeText, skillsLearned, targetRole, industry, yearsOfExperience, completedProjects);
-
-        var request = new InvokeModelRequest
+        try
         {
-            ModelId = _modelId,
-            ContentType = "application/json",
-            Accept = "application/json",
-            Body = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
-            {
-                anthropic_version = "bedrock-2023-05-31",
-                max_tokens = 4096,
-                temperature = 0.3,
-                messages = new[]
-                {
-                    new
-                    {
-                        role = "user",
-                        content = prompt
-                    }
-                }
-            })))
-        };
+            var prompt = BuildResumePrompt(originalResumeText, skillsLearned, targetRole, industry, yearsOfExperience, completedProjects);
 
-        var response = await _bedrockClient.InvokeModelAsync(request);
-        using var reader = new StreamReader(response.Body);
-        var responseBody = await reader.ReadToEndAsync();
-        var jsonResponse = JsonDocument.Parse(responseBody);
-        
-        return jsonResponse.RootElement
-            .GetProperty("content")[0]
-            .GetProperty("text")
-            .GetString() ?? string.Empty;
+            var request = new InvokeModelRequest
+            {
+                ModelId = _modelId,
+                ContentType = "application/json",
+                Accept = "application/json",
+                Body = new MemoryStream(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+                {
+                    anthropic_version = "bedrock-2023-05-31",
+                    max_tokens = 4096,
+                    temperature = 0.3,
+                    messages = new[]
+                    {
+                        new
+                        {
+                            role = "user",
+                            content = prompt
+                        }
+                    }
+                })))
+            };
+
+            var response = await _bedrockClient.InvokeModelAsync(request);
+            using var reader = new StreamReader(response.Body);
+            var responseBody = await reader.ReadToEndAsync();
+            var jsonResponse = JsonDocument.Parse(responseBody);
+            
+            return jsonResponse.RootElement
+                .GetProperty("content")[0]
+                .GetProperty("text")
+                .GetString() ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to generate enhanced resume: {ex.Message}", ex);
+        }
     }
 
     private string BuildResumePrompt(

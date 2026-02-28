@@ -7,11 +7,13 @@ public class ResumeController : Controller
 {
     private readonly TextractService _textract;
     private readonly RoadmapService _roadmap;
+    private readonly ILogger<ResumeController> _logger;
 
-    public ResumeController(TextractService textract, RoadmapService roadmap)
+    public ResumeController(TextractService textract, RoadmapService roadmap, ILogger<ResumeController> logger)
     {
         _textract = textract;
         _roadmap = roadmap;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -77,9 +79,10 @@ public class ResumeController : Controller
 
             return Json(new { success = true, redirectUrl = Url.Action("Analysis", new { userId }) });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return Json(new { success = false, error = "Failed to process resume. Please ensure the file is a valid PDF or DOCX document." });
+            _logger?.LogError(ex, "Resume upload failed for user {UserId}", userId);
+            return Json(new { success = false, error = $"Failed to process resume: {ex.Message}" });
         }
     }
 

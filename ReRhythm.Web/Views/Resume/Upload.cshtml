@@ -109,23 +109,23 @@
                          px-4 py-3 text-white
                          focus:outline-none focus:border-sky-500 focus:ring-1
                          focus:ring-sky-500 transition-colors">
-            <option value="">Select Industry</option>
-            <option value="IT">Information Technology & Software</option>
-            <option value="Healthcare">Healthcare & Life Sciences</option>
-            <option value="Finance">Finance & Banking</option>
-            <option value="Manufacturing">Manufacturing & Industrial</option>
+            <option value="">Select an industry</option>
+            <option value="Information Technology & Software">Information Technology & Software</option>
+            <option value="Healthcare & Life Sciences">Healthcare & Life Sciences</option>
+            <option value="Finance & Banking">Finance & Banking</option>
+            <option value="Manufacturing & Industrial">Manufacturing & Industrial</option>
             <option value="Automotive">Automotive</option>
-            <option value="Aerospace">Aerospace & Defense</option>
-            <option value="Energy">Energy & Utilities</option>
+            <option value="Aerospace & Defense">Aerospace & Defense</option>
+            <option value="Energy & Utilities">Energy & Utilities</option>
             <option value="Telecommunications">Telecommunications</option>
-            <option value="Retail">Retail & E-commerce</option>
-            <option value="Education">Education & EdTech</option>
-            <option value="Consulting">Consulting & Professional Services</option>
-            <option value="Media">Media & Entertainment</option>
-            <option value="RealEstate">Real Estate & Construction</option>
-            <option value="Logistics">Logistics & Supply Chain</option>
-            <option value="Hospitality">Hospitality & Tourism</option>
-            <option value="Government">Government & Public Sector</option>
+            <option value="Retail & E-commerce">Retail & E-commerce</option>
+            <option value="Education & EdTech">Education & EdTech</option>
+            <option value="Consulting & Professional Services">Consulting & Professional Services</option>
+            <option value="Media & Entertainment">Media & Entertainment</option>
+            <option value="Real Estate & Construction">Real Estate & Construction</option>
+            <option value="Logistics & Supply Chain">Logistics & Supply Chain</option>
+            <option value="Hospitality & Tourism">Hospitality & Tourism</option>
+            <option value="Government & Public Sector">Government & Public Sector</option>
           </select>
         </div>
 
@@ -137,7 +137,23 @@
                          px-4 py-3 text-white
                          focus:outline-none focus:border-sky-500 focus:ring-1
                          focus:ring-sky-500 transition-colors">
-            <option value="">Select role first</option>
+            <option value="" style="color: #94a3b8;">Select a role</option>
+            <option value="Business Analyst" style="color: white;">Business Analyst</option>
+            <option value="Data Analyst" style="color: white;">Data Analyst</option>
+            <option value="Software Engineer" style="color: white;">Software Engineer</option>
+            <option value="Senior Software Engineer" style="color: white;">Senior Software Engineer</option>
+            <option value="DevOps Engineer" style="color: white;">DevOps Engineer</option>
+            <option value="Senior DevOps Engineer" style="color: white;">Senior DevOps Engineer</option>
+            <option value="Cloud Engineer" style="color: white;">Cloud Engineer</option>
+            <option value="Data Engineer" style="color: white;">Data Engineer</option>
+            <option value="Data Scientist" style="color: white;">Data Scientist</option>
+            <option value="Machine Learning Engineer" style="color: white;">Machine Learning Engineer</option>
+            <option value="Full Stack Developer" style="color: white;">Full Stack Developer</option>
+            <option value="Backend Developer" style="color: white;">Backend Developer</option>
+            <option value="Frontend Developer" style="color: white;">Frontend Developer</option>
+            <option value="Security Engineer" style="color: white;">Security Engineer</option>
+            <option value="Product Manager" style="color: white;">Product Manager</option>
+            <option value="Engineering Manager" style="color: white;">Engineering Manager</option>
           </select>
         </div>
 
@@ -155,8 +171,8 @@
                   </svg>
                 </div>
                 <div>
-                  <p class="text-white font-semibold text-sm">What kind of learner are you?</p>
-                  <p class="text-slate-400 text-xs">There's no right answer. Select everything that resonates — we'll design a path that fits your natural style.</p>
+                  <p class="text-white font-semibold text-sm">Personalize Your Roadmap</p>
+                  <p class="text-slate-400 text-xs">2-min quiz • Get AI-tailored learning path</p>
                 </div>
               </div>
               <button type="button" id="startPersonalityTest" disabled
@@ -305,8 +321,8 @@
 
   userIdInput.addEventListener('input', checkQuizAvailability);
   expInput.addEventListener('input', checkQuizAvailability);
-  industrySelect.addEventListener('change', checkQuizAvailability);
-  roleSelect.addEventListener('change', checkQuizAvailability);
+  industrySelect.addEventListener('input', checkQuizAvailability);
+  roleSelect.addEventListener('input', checkQuizAvailability);
 
   startTestBtn.addEventListener('click', function() {
     if (!this.disabled) showPersonalityModal();
@@ -326,8 +342,8 @@
       <div class="max-w-4xl w-full">
         <div class="glass-card rounded-2xl p-8 border border-slate-700">
           <div class="text-center mb-8">
-            <h2 class="text-3xl font-bold text-white mb-2">Personalize Your ${targetRole} Roadmap</h2>
-            <p class="text-slate-400">For ${industry} • ${years} years experience • Select activities you enjoy</p>
+            <h2 class="text-3xl font-bold text-white mb-2">What kind of learner are you?</h2>
+            <p class="text-slate-400">There's no right answer. Select everything that resonates — we'll design a path that fits your natural style.</p>
             <div class="mt-4 flex justify-center gap-2">
               ${Array(12).fill(0).map((_, i) => `<div class="w-2 h-2 rounded-full bg-slate-700" id="progress-${i}"></div>`).join('')}
             </div>
@@ -497,100 +513,100 @@
 
   // Industry to roles mapping by experience level
   const rolesByIndustryAndExp = {
-    'IT': {
-      junior: ['Junior Software Engineer', 'Associate Developer', 'Junior DevOps Engineer', 'Junior Data Analyst', 'QA Engineer', 'Technical Support Engineer', 'Junior ML Engineer', 'SOC Analyst', 'Junior Data Scientist'],
-      mid: ['Software Engineer', 'Cloud Engineer', 'DevOps Engineer', 'Data Engineer', 'Full Stack Developer', 'Backend Developer', 'Frontend Developer', 'Security Engineer', 'Machine Learning Engineer', 'AI Engineer', 'Data Scientist', 'Cybersecurity Analyst', 'Penetration Tester', 'NLP Engineer', 'Computer Vision Engineer'],
-      senior: ['Senior Software Engineer', 'Senior Cloud Architect', 'Senior DevOps Engineer', 'Lead Developer', 'Principal Engineer', 'Staff Engineer', 'Senior ML Engineer', 'Senior Data Scientist', 'Lead Security Architect', 'Principal Security Engineer'],
+    'Information Technology & Software': {
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Software Engineer', 'Associate Developer', 'Junior DevOps Engineer', 'Junior Data Analyst', 'QA Engineer', 'Technical Support Engineer', 'Junior ML Engineer', 'SOC Analyst', 'Junior Data Scientist'],
+      mid: ['Business Analyst', 'Data Analyst', 'Software Engineer', 'Cloud Engineer', 'DevOps Engineer', 'Data Engineer', 'Full Stack Developer', 'Backend Developer', 'Frontend Developer', 'Security Engineer', 'Machine Learning Engineer', 'AI Engineer', 'Data Scientist', 'Cybersecurity Analyst', 'Penetration Tester', 'NLP Engineer', 'Computer Vision Engineer'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Software Engineer', 'Senior Cloud Architect', 'Senior DevOps Engineer', 'Lead Developer', 'Principal Engineer', 'Staff Engineer', 'Senior ML Engineer', 'Senior Data Scientist', 'Lead Security Architect', 'Principal Security Engineer'],
       leadership: ['Engineering Manager', 'Technical Director', 'VP of Engineering', 'CTO', 'Solutions Architect', 'Enterprise Architect', 'Head of AI', 'VP of Data Science', 'CISO', 'Director of Security']
     },
-    'Healthcare': {
-      junior: ['Healthcare Coordinator', 'Clinical Assistant', 'Junior Healthcare Analyst'],
-      mid: ['Healthcare Administrator', 'Clinical Manager', 'Healthcare IT Specialist', 'Nurse Practitioner'],
-      senior: ['Senior Healthcare Administrator', 'Senior Clinical Manager', 'Healthcare Consultant'],
+    'Healthcare & Life Sciences': {
+      junior: ['Business Analyst', 'Data Analyst', 'Healthcare Coordinator', 'Clinical Assistant', 'Junior Healthcare Analyst'],
+      mid: ['Business Analyst', 'Data Analyst', 'Healthcare Administrator', 'Clinical Manager', 'Healthcare IT Specialist', 'Nurse Practitioner'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Healthcare Administrator', 'Senior Clinical Manager', 'Healthcare Consultant'],
       leadership: ['Medical Director', 'Chief Medical Officer', 'VP of Healthcare Operations', 'Healthcare Executive']
     },
-    'Finance': {
-      junior: ['Junior Financial Analyst', 'Associate Analyst', 'Junior Accountant'],
-      mid: ['Financial Analyst', 'Risk Manager', 'Compliance Officer', 'Accountant', 'Auditor', 'Investment Analyst'],
-      senior: ['Senior Financial Analyst', 'Senior Risk Manager', 'Investment Banker', 'Portfolio Manager'],
+    'Finance & Banking': {
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Financial Analyst', 'Associate Analyst', 'Junior Accountant'],
+      mid: ['Business Analyst', 'Data Analyst', 'Financial Analyst', 'Risk Manager', 'Compliance Officer', 'Accountant', 'Auditor', 'Investment Analyst'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Financial Analyst', 'Senior Risk Manager', 'Investment Banker', 'Portfolio Manager'],
       leadership: ['Finance Director', 'VP of Finance', 'CFO', 'Chief Risk Officer', 'Head of Investment Banking']
     },
-    'Manufacturing': {
-      junior: ['Production Coordinator', 'Junior Process Engineer', 'Quality Control Technician'],
-      mid: ['Production Manager', 'Process Engineer', 'Manufacturing Engineer', 'Quality Assurance Manager'],
-      senior: ['Senior Production Manager', 'Senior Manufacturing Engineer', 'Supply Chain Manager'],
+    'Manufacturing & Industrial': {
+      junior: ['Business Analyst', 'Data Analyst', 'Production Coordinator', 'Junior Process Engineer', 'Quality Control Technician'],
+      mid: ['Business Analyst', 'Data Analyst', 'Production Manager', 'Process Engineer', 'Manufacturing Engineer', 'Quality Assurance Manager'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Production Manager', 'Senior Manufacturing Engineer', 'Supply Chain Manager'],
       leadership: ['Operations Director', 'VP of Operations', 'Plant Manager', 'Chief Operations Officer']
     },
     'Automotive': {
-      junior: ['Junior Automotive Engineer', 'Test Engineer', 'Quality Inspector'],
-      mid: ['Automotive Engineer', 'Vehicle Dynamics Engineer', 'Powertrain Engineer', 'Design Engineer'],
-      senior: ['Senior Automotive Engineer', 'Lead Design Engineer', 'Principal Engineer'],
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Automotive Engineer', 'Test Engineer', 'Quality Inspector'],
+      mid: ['Business Analyst', 'Data Analyst', 'Automotive Engineer', 'Vehicle Dynamics Engineer', 'Powertrain Engineer', 'Design Engineer'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Automotive Engineer', 'Lead Design Engineer', 'Principal Engineer'],
       leadership: ['Engineering Director', 'VP of Engineering', 'Chief Engineer', 'Head of R&D']
     },
-    'Aerospace': {
-      junior: ['Junior Aerospace Engineer', 'Systems Engineer', 'Test Engineer'],
-      mid: ['Aerospace Engineer', 'Avionics Engineer', 'Propulsion Engineer', 'Structural Engineer'],
-      senior: ['Senior Aerospace Engineer', 'Lead Systems Engineer', 'Principal Engineer'],
+    'Aerospace & Defense': {
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Aerospace Engineer', 'Systems Engineer', 'Test Engineer'],
+      mid: ['Business Analyst', 'Data Analyst', 'Aerospace Engineer', 'Avionics Engineer', 'Propulsion Engineer', 'Structural Engineer'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Aerospace Engineer', 'Lead Systems Engineer', 'Principal Engineer'],
       leadership: ['Engineering Director', 'VP of Engineering', 'Chief Engineer', 'Program Manager']
     },
-    'Energy': {
-      junior: ['Junior Energy Analyst', 'Field Engineer', 'Operations Technician'],
-      mid: ['Energy Engineer', 'Renewable Energy Specialist', 'Power Systems Engineer', 'Project Engineer'],
-      senior: ['Senior Energy Engineer', 'Lead Project Engineer', 'Energy Consultant'],
+    'Energy & Utilities': {
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Energy Analyst', 'Field Engineer', 'Operations Technician'],
+      mid: ['Business Analyst', 'Data Analyst', 'Energy Engineer', 'Renewable Energy Specialist', 'Power Systems Engineer', 'Project Engineer'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Energy Engineer', 'Lead Project Engineer', 'Energy Consultant'],
       leadership: ['Director of Operations', 'VP of Engineering', 'Chief Sustainability Officer', 'Head of Energy']
     },
     'Telecommunications': {
-      junior: ['Junior Network Engineer', 'Telecom Technician', 'Support Engineer'],
-      mid: ['Network Engineer', 'Telecom Engineer', 'RF Engineer', 'Systems Engineer'],
-      senior: ['Senior Network Architect', 'Lead Telecom Engineer', 'Principal Engineer'],
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Network Engineer', 'Telecom Technician', 'Support Engineer'],
+      mid: ['Business Analyst', 'Data Analyst', 'Network Engineer', 'Telecom Engineer', 'RF Engineer', 'Systems Engineer'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Network Architect', 'Lead Telecom Engineer', 'Principal Engineer'],
       leadership: ['Director of Network Operations', 'VP of Engineering', 'CTO', 'Head of Infrastructure']
     },
-    'Retail': {
-      junior: ['Assistant Store Manager', 'Retail Coordinator', 'Junior Merchandiser'],
-      mid: ['Store Manager', 'E-commerce Manager', 'Merchandising Manager', 'Customer Experience Manager'],
-      senior: ['Senior Store Manager', 'Regional Manager', 'Retail Analyst', 'Supply Chain Coordinator'],
+    'Retail & E-commerce': {
+      junior: ['Business Analyst', 'Data Analyst', 'Assistant Store Manager', 'Retail Coordinator', 'Junior Merchandiser'],
+      mid: ['Business Analyst', 'Data Analyst', 'Store Manager', 'E-commerce Manager', 'Merchandising Manager', 'Customer Experience Manager'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Store Manager', 'Regional Manager', 'Retail Analyst', 'Supply Chain Coordinator'],
       leadership: ['Retail Director', 'VP of Retail Operations', 'Chief Merchandising Officer', 'Head of E-commerce']
     },
-    'Education': {
-      junior: ['Teaching Assistant', 'Junior Instructional Designer', 'Education Coordinator'],
-      mid: ['Teacher', 'Curriculum Developer', 'Instructional Designer', 'Academic Advisor'],
-      senior: ['Senior Teacher', 'Lead Curriculum Developer', 'Senior Academic Advisor'],
+    'Education & EdTech': {
+      junior: ['Business Analyst', 'Data Analyst', 'Teaching Assistant', 'Junior Instructional Designer', 'Education Coordinator'],
+      mid: ['Business Analyst', 'Data Analyst', 'Teacher', 'Curriculum Developer', 'Instructional Designer', 'Academic Advisor'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Teacher', 'Lead Curriculum Developer', 'Senior Academic Advisor'],
       leadership: ['Principal', 'Education Director', 'Dean', 'VP of Education', 'Superintendent']
     },
-    'Consulting': {
-      junior: ['Junior Consultant', 'Associate Consultant', 'Business Analyst'],
-      mid: ['Management Consultant', 'Strategy Consultant', 'IT Consultant', 'Change Management Consultant'],
-      senior: ['Senior Consultant', 'Principal Consultant', 'Lead Business Analyst'],
+    'Consulting & Professional Services': {
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Consultant', 'Associate Consultant'],
+      mid: ['Business Analyst', 'Data Analyst', 'Management Consultant', 'Strategy Consultant', 'IT Consultant', 'Change Management Consultant'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Consultant', 'Principal Consultant', 'Lead Business Analyst'],
       leadership: ['Consulting Director', 'Partner', 'VP of Consulting', 'Managing Director']
     },
-    'Media': {
-      junior: ['Junior Content Creator', 'Junior Designer', 'Social Media Coordinator'],
-      mid: ['Content Creator', 'Digital Marketing Manager', 'Social Media Manager', 'Graphic Designer', 'UX/UI Designer'],
-      senior: ['Senior Content Creator', 'Senior UX/UI Designer', 'Video Producer', 'Creative Lead'],
+    'Media & Entertainment': {
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Content Creator', 'Junior Designer', 'Social Media Coordinator'],
+      mid: ['Business Analyst', 'Data Analyst', 'Content Creator', 'Digital Marketing Manager', 'Social Media Manager', 'Graphic Designer', 'UX/UI Designer'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Content Creator', 'Senior UX/UI Designer', 'Video Producer', 'Creative Lead'],
       leadership: ['Creative Director', 'VP of Marketing', 'Chief Marketing Officer', 'Head of Digital']
     },
-    'RealEstate': {
-      junior: ['Junior Property Manager', 'Real Estate Coordinator', 'Leasing Agent'],
-      mid: ['Property Manager', 'Real Estate Analyst', 'Construction Manager', 'Project Manager'],
-      senior: ['Senior Property Manager', 'Senior Real Estate Analyst', 'Development Manager'],
+    'Real Estate & Construction': {
+      junior: ['Business Analyst', 'Data Analyst', 'Junior Property Manager', 'Real Estate Coordinator', 'Leasing Agent'],
+      mid: ['Business Analyst', 'Data Analyst', 'Property Manager', 'Real Estate Analyst', 'Construction Manager', 'Project Manager'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Property Manager', 'Senior Real Estate Analyst', 'Development Manager'],
       leadership: ['Director of Real Estate', 'VP of Development', 'Chief Investment Officer', 'Head of Property Management']
     },
-    'Logistics': {
-      junior: ['Logistics Coordinator', 'Supply Chain Analyst', 'Warehouse Supervisor'],
-      mid: ['Logistics Manager', 'Supply Chain Manager', 'Operations Manager', 'Procurement Manager'],
-      senior: ['Senior Logistics Manager', 'Senior Supply Chain Manager', 'Distribution Manager'],
+    'Logistics & Supply Chain': {
+      junior: ['Business Analyst', 'Data Analyst', 'Logistics Coordinator', 'Supply Chain Analyst', 'Warehouse Supervisor'],
+      mid: ['Business Analyst', 'Data Analyst', 'Logistics Manager', 'Supply Chain Manager', 'Operations Manager', 'Procurement Manager'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Logistics Manager', 'Senior Supply Chain Manager', 'Distribution Manager'],
       leadership: ['Director of Logistics', 'VP of Supply Chain', 'Chief Supply Chain Officer', 'Head of Operations']
     },
-    'Hospitality': {
-      junior: ['Front Desk Manager', 'Event Coordinator', 'Guest Services Associate'],
-      mid: ['Hotel Manager', 'Restaurant Manager', 'Event Manager', 'Operations Manager'],
-      senior: ['Senior Hotel Manager', 'Regional Manager', 'Director of Operations'],
+    'Hospitality & Tourism': {
+      junior: ['Business Analyst', 'Data Analyst', 'Front Desk Manager', 'Event Coordinator', 'Guest Services Associate'],
+      mid: ['Business Analyst', 'Data Analyst', 'Hotel Manager', 'Restaurant Manager', 'Event Manager', 'Operations Manager'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Hotel Manager', 'Regional Manager', 'Director of Operations'],
       leadership: ['General Manager', 'VP of Operations', 'Director of Hospitality', 'Chief Experience Officer']
     },
-    'Government': {
-      junior: ['Policy Analyst', 'Program Coordinator', 'Administrative Officer'],
-      mid: ['Policy Advisor', 'Program Manager', 'Public Affairs Specialist', 'Compliance Officer'],
-      senior: ['Senior Policy Advisor', 'Senior Program Manager', 'Director of Programs'],
+    'Government & Public Sector': {
+      junior: ['Business Analyst', 'Data Analyst', 'Policy Analyst', 'Program Coordinator', 'Administrative Officer'],
+      mid: ['Business Analyst', 'Data Analyst', 'Policy Advisor', 'Program Manager', 'Public Affairs Specialist', 'Compliance Officer'],
+      senior: ['Senior Business Analyst', 'Senior Data Analyst', 'Senior Policy Advisor', 'Senior Program Manager', 'Director of Programs'],
       leadership: ['Deputy Director', 'Director', 'Assistant Secretary', 'Chief of Staff']
     }
   };

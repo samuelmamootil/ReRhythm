@@ -1,0 +1,123 @@
+@{
+    ViewData["Title"] = "Education";
+}
+
+<div class="hero-bg min-h-screen">
+  
+  <!-- Hero Section -->
+  <div class="max-w-6xl mx-auto px-8 pt-20 pb-16 text-center">
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
+      Empower Your Students with <span class="beat-text">AI-Driven Career Coaching</span>
+    </h1>
+    <p class="text-xl text-slate-400 mb-8 max-w-3xl mx-auto">
+      Partner with ReRhythm to provide personalized 28-day learning roadmaps that bridge the gap between education and employment.
+    </p>
+    <div class="flex gap-4 justify-center">
+      <a href="#contact" class="glow-btn px-8 py-4 rounded-xl font-semibold text-white">
+        Contact Education Team
+      </a>
+      <a href="/Resume/Upload" class="px-8 py-4 rounded-xl font-semibold text-white bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-700">
+        Try Demo
+      </a>
+    </div>
+  </div>
+
+  <!-- Benefits Section -->
+  <div class="max-w-6xl mx-auto px-8 py-16">
+    <h2 class="text-3xl font-bold text-center mb-12">Why Universities Choose ReRhythm</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+      
+      <div class="glass-card rounded-2xl p-8">
+        <div class="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-3">Improve Student Outcomes</h3>
+        <p class="text-slate-400">
+          Increase job placement rates with personalized career roadmaps tailored to each student's skills and target role.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-8">
+        <div class="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-3">AWS-Powered Security</h3>
+        <p class="text-slate-400">
+          Enterprise-grade security with AWS Bedrock AI, ensuring student data privacy and compliance with educational standards.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-8">
+        <div class="w-12 h-12 rounded-xl bg-sky-500/20 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-3">Track & Measure Success</h3>
+        <p class="text-slate-400">
+          Monitor student progress with detailed analytics and milestone tracking to demonstrate program effectiveness.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Contact Section -->
+  <div id="contact" class="max-w-4xl mx-auto px-8 py-16">
+    <div class="glass-card rounded-2xl p-12">
+      <h2 class="text-3xl font-bold text-center mb-4">Get Started with ReRhythm</h2>
+      <p class="text-slate-400 text-center mb-8">
+        Join leading universities in preparing students for successful careers
+      </p>
+      
+      <form class="space-y-6">
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">University Name</label>
+            <input type="text" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Your Name</label>
+            <input type="text" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+            <input type="email" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Phone</label>
+            <input type="tel" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Number of Students</label>
+          <select class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
+            <option value="">Select range</option>
+            <option value="1-100">1-100</option>
+            <option value="101-500">101-500</option>
+            <option value="501-1000">501-1,000</option>
+            <option value="1000+">1,000+</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Message</label>
+          <textarea rows="4" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" placeholder="Tell us about your needs..."></textarea>
+        </div>
+
+        <button type="submit" class="glow-btn w-full py-4 rounded-xl font-semibold text-white">
+          Contact Education Team
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>

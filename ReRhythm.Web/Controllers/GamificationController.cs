@@ -23,23 +23,12 @@ public class GamificationController : Controller
 
         var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId);
         var completedCount = allLessons.Count(l => l.IsCompleted);
+        var totalLessons = roadmap.Modules.Sum(m => m.DailySprints.Count);
+        var progressPercent = totalLessons > 0 ? (int)((completedCount / (double)totalLessons) * 100) : 0;
         
-        // Try to get badges, but don't fail if table doesn't exist yet
-        List<BadgeAchievement> userBadges;
-        try
-        {
-            userBadges = await _badgeService.GetUserBadgesAsync(userId);
-        }
-        catch (Amazon.DynamoDBv2.Model.ResourceNotFoundException)
-        {
-            userBadges = new List<BadgeAchievement>();
-        }
-
-        ViewBag.UserId = userId;
         ViewBag.CompletedCount = completedCount;
-        ViewBag.TotalLessons = allLessons.Count;
-        ViewBag.ProgressPercent = allLessons.Count > 0 ? (int)((completedCount / (double)allLessons.Count) * 100) : 0;
-        ViewBag.UserBadges = userBadges;
+        ViewBag.TotalLessons = totalLessons;
+        ViewBag.ProgressPercent = progressPercent;
 
         return View(roadmap);
     }

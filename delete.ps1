@@ -22,9 +22,13 @@ $bucketName = aws cloudformation describe-stacks --stack-name "$Environment-stac
 
 if ($bucketName) {
     Write-Host "Found S3 bucket: $bucketName" -ForegroundColor Green
-    Write-Host "Emptying S3 bucket..." -ForegroundColor Yellow
+    Write-Host "Emptying S3 bucket (all folders and files)..." -ForegroundColor Yellow
     aws s3 rm "s3://$bucketName" --recursive --region $Region
-    Write-Host "S3 bucket emptied" -ForegroundColor Green
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "S3 bucket emptied successfully" -ForegroundColor Green
+    } else {
+        Write-Host "Warning: Failed to empty S3 bucket" -ForegroundColor Yellow
+    }
 }
 
 # Delete CloudFormation stack

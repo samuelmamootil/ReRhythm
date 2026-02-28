@@ -101,6 +101,7 @@
           <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
         </svg>
       </button>
+      <a href="/Home/Education" class="text-slate-400 hover:text-white transition-colors">Education</a>
       <a href="/Roadmap/FindUser" class="text-slate-400 hover:text-white transition-colors">Track Milestones</a>
       <span class="text-xs bg-slate-800 border border-slate-700 text-slate-300
                    px-3 py-1 rounded-full">
@@ -152,9 +153,9 @@
 
     // Update Track Milestones link if userId exists
     const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
-    if (userId) {
-      localStorage.setItem('reRhythmLastUserId', userId);
+    const currentUserId = urlParams.get('userId');
+    if (currentUserId) {
+      localStorage.setItem('reRhythmLastUserId', currentUserId);
     }
   </script>
 
