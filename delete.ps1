@@ -22,13 +22,25 @@ $bucketName = aws cloudformation describe-stacks --stack-name "$Environment-stac
 
 if ($bucketName) {
     Write-Host "Found S3 bucket: $bucketName" -ForegroundColor Green
-    Write-Host "Emptying S3 bucket (all folders and files)..." -ForegroundColor Yellow
-    aws s3 rm "s3://$bucketName" --recursive --region $Region
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "S3 bucket emptied successfully" -ForegroundColor Green
-    } else {
-        Write-Host "Warning: Failed to empty S3 bucket" -ForegroundColor Yellow
+    Write-Host "Emptying S3 bucket (all folders, files, and versions)..." -ForegroundColor Yellow
+    
+    # Delete all object versions and delete markers
+    aws s3api list-object-versions --bucket $bucketName --region $Region --output json | ConvertFrom-Json | ForEach-Object {
+        if ($_.Versions) {
+            $_.Versions | ForEach-Object {
+                Write-Host "Deleting version: $($_.Key) ($($_.VersionId))" -ForegroundColor Gray
+                aws s3api delete-object --bucket $bucketName --key $_.Key --version-id $_.VersionId --region $Region | Out-Null
+            }
+        }
+        if ($_.DeleteMarkers) {
+            $_.DeleteMarkers | ForEach-Object {
+                Write-Host "Deleting marker: $($_.Key) ($($_.VersionId))" -ForegroundColor Gray
+                aws s3api delete-object --bucket $bucketName --key $_.Key --version-id $_.VersionId --region $Region | Out-Null
+            }
+        }
     }
+    
+    Write-Host "S3 bucket emptied successfully" -ForegroundColor Green
 }
 
 # Delete CloudFormation stack
