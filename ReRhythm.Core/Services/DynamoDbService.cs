@@ -34,7 +34,10 @@ public class DynamoDbService
             ["createdAt"]   = new AttributeValue { S = plan.GeneratedAt.ToString("O") },
             ["targetRole"]  = new AttributeValue { S = plan.TargetRole },
             ["industry"]    = new AttributeValue { S = plan.Industry },
-            ["yearsOfExperience"] = new AttributeValue { N = plan.YearsOfExperience.ToString() },
+            ["totalYearsOfExperience"] = new AttributeValue { N = plan.TotalYearsOfExperience.ToString() },
+            ["yearsInTargetIndustry"] = new AttributeValue { N = plan.YearsInTargetIndustry.ToString() },
+            ["fullName"]    = new AttributeValue { S = plan.FullName },
+            ["contactInfo"] = new AttributeValue { S = plan.ContactInfo },
             ["personalityType"] = new AttributeValue { S = plan.PersonalityType ?? "" },
             ["roadmapJson"] = new AttributeValue { S = JsonSerializer.Serialize(plan) },
             // TTL: keep active profiles for 30 days per privacy policy

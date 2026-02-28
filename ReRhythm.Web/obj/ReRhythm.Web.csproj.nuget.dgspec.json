@@ -63,9 +63,17 @@
               "target": "Package",
               "version": "[4.0.14, )"
             },
+            "AWSSDK.Rekognition": {
+              "target": "Package",
+              "version": "[4.0.3.13, )"
+            },
             "AWSSDK.S3": {
               "target": "Package",
               "version": "[4.0.18.6, )"
+            },
+            "AWSSDK.SimpleEmail": {
+              "target": "Package",
+              "version": "[4.0.2.14, )"
             },
             "AWSSDK.Textract": {
               "target": "Package",

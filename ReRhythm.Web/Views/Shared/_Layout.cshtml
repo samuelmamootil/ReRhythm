@@ -103,6 +103,7 @@
       </button>
       <a href="/Home/Education" class="text-slate-400 hover:text-white transition-colors">Education</a>
       <a href="/Roadmap/FindUser" class="text-slate-400 hover:text-white transition-colors">Track Milestones</a>
+      <a id="forumLink" href="#" class="text-slate-400 hover:text-white transition-colors">Forum</a>
       <span class="text-xs bg-slate-800 border border-slate-700 text-slate-300
                    px-3 py-1 rounded-full">
         Powered by AWS Bedrock
@@ -156,6 +157,12 @@
     const currentUserId = urlParams.get('userId');
     if (currentUserId) {
       localStorage.setItem('reRhythmLastUserId', currentUserId);
+      document.getElementById('forumLink').href = `/Forum/Index?userId=${currentUserId}`;
+    } else {
+      const lastUserId = localStorage.getItem('reRhythmLastUserId');
+      if (lastUserId) {
+        document.getElementById('forumLink').href = `/Forum/Index?userId=${lastUserId}`;
+      }
     }
   </script>
 

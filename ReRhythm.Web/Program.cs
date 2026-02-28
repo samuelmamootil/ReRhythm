@@ -2,6 +2,8 @@ using Amazon.BedrockRuntime;        // ✅ Changed from BedrockAgentRuntime
 using Amazon.DynamoDBv2;
 using Amazon.S3;
 using Amazon.Textract;
+using Amazon.Rekognition;
+using Amazon.SimpleEmail;
 using ReRhythm.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,8 @@ builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddAWSService<IAmazonTextract>();
 builder.Services.AddAWSService<IAmazonDynamoDB>();
 builder.Services.AddAWSService<IAmazonBedrockRuntime>();  // ✅ Now resolves correctly
+builder.Services.AddAWSService<IAmazonRekognition>();
+builder.Services.AddAWSService<IAmazonSimpleEmailService>();
 
 // ── App Services ──────────────────────────────────────
 builder.Services.AddScoped<TextractService>();
@@ -23,10 +27,11 @@ builder.Services.AddScoped<DynamoDbService>();
 builder.Services.AddScoped<ResumeGeneratorService>();
 builder.Services.AddScoped<CertificateService>();
 builder.Services.AddScoped<BadgeService>();
+builder.Services.AddScoped<ForumService>();
 builder.Services.AddScoped<ResumeBuilderService>(sp => 
     new ResumeBuilderService(
         sp.GetRequiredService<IAmazonBedrockRuntime>(),
-        "anthropic.claude-sonnet-4-20250514-v1:0"
+        "us.anthropic.claude-sonnet-4-20250514-v1:0"
     )
 );
 

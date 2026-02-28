@@ -1,0 +1,166 @@
+@model ReRhythm.Core.Models.ForumQuestion
+@{
+    ViewData["Title"] = Model.Title;
+    var userId = ViewBag.UserId;
+    var answers = (List<ReRhythm.Core.Models.ForumAnswer>)ViewBag.Answers;
+}
+
+<div class="hero-bg min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-16">
+    
+    <!-- Question -->
+    <div class="glass-card rounded-2xl p-8 mb-8">
+      <h1 class="text-3xl font-bold text-white mb-4">@Model.Title</h1>
+      <div class="flex items-center gap-4 text-sm text-slate-400 mb-6">
+        <span>@Model.UserName</span>
+        <span>@Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+      </div>
+      <p class="text-slate-300 mb-6 whitespace-pre-wrap">@Model.Content</p>
+      
+      @if (Model.ImageUrls.Any())
+      {
+        <div class="flex gap-4 mb-6">
+          @foreach (var img in Model.ImageUrls)
+          {
+            <img src="@img" alt="Question image" class="max-w-sm rounded-xl border border-slate-700" />
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Answer Form -->
+    <div class="glass-card rounded-xl p-6 mb-8">
+      <h2 class="text-xl font-bold text-white mb-4">Your Answer</h2>
+      <form id="answerForm">
+        <input type="hidden" name="questionId" value="@Model.QuestionId" />
+        <input type="hidden" name="userId" value="@userId" />
+        <textarea name="content" required rows="4" maxlength="2000" placeholder="Share your knowledge..."
+                  class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white mb-4
+                         focus:outline-none focus:border-sky-500"></textarea>
+        <button type="submit" class="glow-btn px-6 py-3 rounded-xl font-semibold">
+          Post Answer
+        </button>
+      </form>
+    </div>
+
+    <!-- Answers -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-bold text-white mb-4">@answers.Count Answers</h2>
+      
+      @{
+        var sortedAnswers = answers.OrderByDescending(a => a.AnswerId == Model.AcceptedAnswerId)
+                                   .ThenByDescending(a => a.Upvotes - a.Downvotes)
+                                   .ThenByDescending(a => a.CreatedAt);
+      }
+      
+      @foreach (var answer in sortedAnswers)
+      {
+        var netVotes = answer.Upvotes - answer.Downvotes;
+        var isInappropriate = answer.Downvotes >= 2;
+        var isAccepted = answer.AnswerId == Model.AcceptedAnswerId;
+        
+        <div class="glass-card rounded-xl p-6 @(isInappropriate ? "opacity-50" : "") @(isAccepted ? "border-2 border-emerald-500" : "")"
+             data-answer-id="@answer.AnswerId">
+          
+          @if (isAccepted)
+          {
+            <div class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold inline-block mb-4">
+              ✓ Accepted Answer
+            </div>
+          }
+          
+          @if (isInappropriate)
+          {
+            <div class="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs font-semibold inline-block mb-4">
+              ⚠ Flagged as Inappropriate
+            </div>
+          }
+          
+          <div class="flex gap-4">
+            <!-- Voting -->
+            <div class="flex flex-col items-center gap-2">
+              <button onclick="vote('@answer.AnswerId', true)" 
+                      class="text-slate-400 hover:text-sky-400 transition-colors @(answer.UpvotedBy.Contains(userId) ? "text-sky-400" : "")">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 4l-8 8h5v8h6v-8h5z"/>
+                </svg>
+              </button>
+              <span class="text-lg font-bold @(netVotes > 0 ? "text-emerald-400" : netVotes < 0 ? "text-red-400" : "text-slate-400")">
+                @netVotes
+              </span>
+              <button onclick="vote('@answer.AnswerId', false)"
+                      class="text-slate-400 hover:text-red-400 transition-colors @(answer.DownvotedBy.Contains(userId) ? "text-red-400" : "")">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 20l8-8h-5V4H9v8H4z"/>
+                </svg>
+              </button>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1">
+              <p class="text-slate-300 mb-4 whitespace-pre-wrap">@answer.Content</p>
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-slate-400">
+                  <span>@answer.UserName</span>
+                  <span class="mx-2">•</span>
+                  <span>@answer.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                </div>
+                
+                @if (Model.UserId == userId && !isAccepted)
+                {
+                  <button onclick="acceptAnswer('@answer.AnswerId')"
+                          class="text-sm text-emerald-400 hover:text-emerald-300 font-semibold">
+                    ✓ Accept Answer
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.getElementById('answerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    const response = await fetch('@Url.Action("PostAnswer")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(formData)
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      location.reload();
+    }
+  });
+
+  async function vote(answerId, isUpvote) {
+    const response = await fetch('@Url.Action("Vote")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ answerId, userId: '@userId', isUpvote })
+    });
+    
+    if ((await response.json()).success) {
+      location.reload();
+    }
+  }
+
+  async function acceptAnswer(answerId) {
+    const response = await fetch('@Url.Action("AcceptAnswer")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ questionId: '@Model.QuestionId', answerId })
+    });
+    
+    if ((await response.json()).success) {
+      location.reload();
+    }
+  }
+</script>

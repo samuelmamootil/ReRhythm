@@ -91,14 +91,25 @@
           <p class="text-xs text-slate-500 mt-1">Letters, numbers, hyphens, and underscores only (e.g., john_doe-123)</p>
         </div>
 
-        <!-- Years of Experience Field -->
+        <!-- Total Years of Experience Field -->
         <div class="mb-5">
-          <label class="block text-sm font-medium text-slate-300 mb-2">Years of Experience</label>
-          <input type="number" name="yearsOfExperience" min="0" max="50" required
+          <label class="block text-sm font-medium text-slate-300 mb-2">Total Years of Experience</label>
+          <input type="number" name="totalYearsOfExperience" min="0" max="50" required
                  class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
                         px-4 py-3 text-white placeholder-slate-500
                         focus:outline-none focus:border-sky-500 focus:ring-1
                         focus:ring-sky-500 transition-colors" />
+        </div>
+
+        <!-- Years in Target Industry Field -->
+        <div class="mb-5">
+          <label class="block text-sm font-medium text-slate-300 mb-2">Years in Target Industry</label>
+          <input type="number" name="yearsInTargetIndustry" min="0" max="50" required
+                 class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
+                        px-4 py-3 text-white placeholder-slate-500
+                        focus:outline-none focus:border-sky-500 focus:ring-1
+                        focus:ring-sky-500 transition-colors" />
+          <p class="text-xs text-slate-500 mt-1">How many years have you worked in this specific industry?</p>
         </div>
 
         <!-- Industry Field -->
@@ -299,7 +310,8 @@
   const startTestBtn = document.getElementById('startPersonalityTest');
   const industrySelect = document.getElementById('industry');
   const roleSelect = document.getElementById('targetRole');
-  const expInput = document.querySelector('[name="yearsOfExperience"]');
+  const expInput = document.querySelector('[name="totalYearsOfExperience"]');
+  const industryExpInput = document.querySelector('[name="yearsInTargetIndustry"]');
 
   // Enable quiz button only when all required fields are filled
   function checkQuizAvailability() {
@@ -611,21 +623,26 @@
     }
   };
 
-  function getExpLevel(years) {
-    if (years <= 2) return 'junior';
-    if (years <= 5) return 'mid';
-    if (years <= 10) return 'senior';
+  function getExpLevel(totalYears, industryYears) {
+    // If industry experience is very low but total experience is high, give credit for transferable skills
+    // Use weighted average: 70% industry experience + 30% total experience
+    const effectiveYears = (industryYears * 0.7) + (totalYears * 0.3);
+    
+    if (effectiveYears <= 2) return 'junior';
+    if (effectiveYears <= 5) return 'mid';
+    if (effectiveYears <= 10) return 'senior';
     return 'leadership';
   }
 
   function updateRoles() {
     const industry = document.getElementById('industry').value;
-    const years = parseInt(document.querySelector('[name="yearsOfExperience"]').value) || 0;
+    const totalYears = parseInt(document.querySelector('[name="totalYearsOfExperience"]').value) || 0;
+    const industryYears = parseInt(document.querySelector('[name="yearsInTargetIndustry"]').value) || 0;
     const roleSelect = document.getElementById('targetRole');
     roleSelect.innerHTML = '<option value="">Select a role</option>';
     
     if (industry && rolesByIndustryAndExp[industry]) {
-      const expLevel = getExpLevel(years);
+      const expLevel = getExpLevel(totalYears, industryYears);
       const roles = rolesByIndustryAndExp[industry][expLevel] || [];
       roles.forEach(role => {
         const option = document.createElement('option');
@@ -637,7 +654,8 @@
   }
 
   document.getElementById('industry').addEventListener('change', updateRoles);
-  document.querySelector('[name="yearsOfExperience"]').addEventListener('input', updateRoles);
+  document.querySelector('[name="totalYearsOfExperience"]').addEventListener('input', updateRoles);
+  document.querySelector('[name="yearsInTargetIndustry"]').addEventListener('input', updateRoles);
 
   function showFile(file) {
     // Validate file type

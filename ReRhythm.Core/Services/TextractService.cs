@@ -32,7 +32,7 @@ public class TextractService
         _logger = logger;
     }
 
-    public async Task<string> UploadAndParseResumeAsync(
+    public async Task<(string ResumeText, string FullName, string ContactInfo)> UploadAndParseResumeAsync(
         Stream fileStream,
         string fileName,
         string userId,
@@ -55,7 +55,9 @@ public class TextractService
         if (ext == ".docx")
         {
             _logger.LogInformation("Processing DOCX file directly");
-            return ExtractTextFromDocx(fileBytes);
+            var text = ExtractTextFromDocx(fileBytes);
+            var (name, contact) = ExtractNameAndContact(text);
+            return (text, name, contact);
         }
         
         // Upload to S3 for Textract
@@ -89,18 +91,45 @@ public class TextractService
             var response = await _textract.DetectDocumentTextAsync(detectRequest, ct);
 
             var resumeText = ExtractTextFromBlocks(response.Blocks);
+            var (fullName, contactInfo) = ExtractNameAndContact(resumeText);
 
             _logger.LogInformation(
                 "Textract parsed {CharCount} chars from resume for user {UserId}",
                 resumeText.Length, userId);
 
-            return resumeText;
+            return (resumeText, fullName, contactInfo);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Textract failed, falling back to PdfPig");
-            return ExtractTextWithPdfPig(fileBytes);
+            var text = ExtractTextWithPdfPig(fileBytes);
+            var (name, contact) = ExtractNameAndContact(text);
+            return (text, name, contact);
         }
+    }
+
+    private (string FullName, string ContactInfo) ExtractNameAndContact(string resumeText)
+    {
+        var lines = resumeText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var fullName = "";
+        var contactParts = new List<string>();
+
+        // Extract name (usually first non-empty line)
+        if (lines.Length > 0)
+            fullName = lines[0];
+
+        // Extract contact info (email, phone, location)
+        foreach (var line in lines.Take(10))
+        {
+            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"))
+                contactParts.Add(line);
+            else if (System.Text.RegularExpressions.Regex.IsMatch(line, @"\+?\d[\d\s\-\(\)]{7,}"))
+                contactParts.Add(line);
+            else if (line.Contains(",") && (line.Contains("USA") || line.Contains("United States") || System.Text.RegularExpressions.Regex.IsMatch(line, @"\b[A-Z]{2}\b")))
+                contactParts.Add(line);
+        }
+
+        return (fullName, string.Join(" | ", contactParts));
     }
 
     private string ExtractTextFromDocx(byte[] docxBytes)

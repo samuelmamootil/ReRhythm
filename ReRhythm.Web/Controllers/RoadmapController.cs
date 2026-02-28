@@ -23,9 +23,9 @@ public partial class RoadmapController : Controller
         _logger = logger;
     }
 
-    // GET /Roadmap/Index?userId=xxx
+    // GET /Roadmap/Index?userId=xxx&customSkills=skill1,skill2
     [HttpGet]
-    public async Task<IActionResult> Index(string userId, CancellationToken ct)
+    public async Task<IActionResult> Index(string userId, string? customSkills, CancellationToken ct)
     {
         if (string.IsNullOrEmpty(userId))
             return RedirectToAction("Upload", "Resume");
@@ -34,6 +34,25 @@ public partial class RoadmapController : Controller
 
         if (plan is null)
             return RedirectToAction("Upload", "Resume");
+
+        // Only regenerate if user added custom skills
+        if (!string.IsNullOrEmpty(customSkills))
+        {
+            var additionalSkills = customSkills.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Take(5)
+                .Where(s => !plan.SkillsToAcquire.Contains(s))
+                .ToList();
+            
+            if (additionalSkills.Any())
+            {
+                _logger.LogInformation("Regenerating roadmap with custom skills: {Skills}", string.Join(", ", additionalSkills));
+                plan = await _roadmapService.GenerateRoadmapAsync(
+                    userId, plan.OriginalResumeText, plan.TargetRole, plan.Industry,
+                    plan.TotalYearsOfExperience, plan.YearsInTargetIndustry,
+                    plan.FullName, plan.ContactInfo, plan.PersonalityType,
+                    string.Join(", ", additionalSkills), ct);
+            }
+        }
 
         var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
         var completedCount = allLessons.Count(l => l.IsCompleted);
@@ -67,15 +86,19 @@ public partial class RoadmapController : Controller
         string resumeText,
         string targetRole,
         string industry,
-        int yearsOfExperience,
+        int totalYearsOfExperience,
+        int yearsInTargetIndustry,
         CancellationToken ct)
     {
-        // Get existing plan to preserve personality type
+        // Get existing plan to preserve personality type, name, and contact
         var existingPlan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
         var personalityType = existingPlan?.PersonalityType;
+        var fullName = existingPlan?.FullName ?? "";
+        var contactInfo = existingPlan?.ContactInfo ?? "";
 
         var plan = await _roadmapService.GenerateRoadmapAsync(
-            userId, resumeText, targetRole, industry, yearsOfExperience, personalityType, ct);
+            userId, resumeText, targetRole, industry, totalYearsOfExperience, yearsInTargetIndustry,
+            fullName, contactInfo, personalityType, null, ct);
 
         return RedirectToAction("Index", new { userId });
     }

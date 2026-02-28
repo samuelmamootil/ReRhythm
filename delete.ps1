@@ -43,6 +43,25 @@ if ($bucketName) {
     Write-Host "S3 bucket emptied successfully" -ForegroundColor Green
 }
 
+# Empty forum images bucket
+$forumBucket = "$Environment-forum-images-$AccountId"
+Write-Host "`nEmptying forum images bucket..." -ForegroundColor Yellow
+$ErrorActionPreference = "SilentlyContinue"
+aws s3api list-object-versions --bucket $forumBucket --region $Region --output json 2>$null | ConvertFrom-Json | ForEach-Object {
+    if ($_.Versions) {
+        $_.Versions | ForEach-Object {
+            aws s3api delete-object --bucket $forumBucket --key $_.Key --version-id $_.VersionId --region $Region | Out-Null
+        }
+    }
+    if ($_.DeleteMarkers) {
+        $_.DeleteMarkers | ForEach-Object {
+            aws s3api delete-object --bucket $forumBucket --key $_.Key --version-id $_.VersionId --region $Region | Out-Null
+        }
+    }
+}
+$ErrorActionPreference = "Continue"
+Write-Host "Forum images bucket emptied" -ForegroundColor Green
+
 # Delete CloudFormation stack
 Write-Host "`nDeleting CloudFormation stack..." -ForegroundColor Yellow
 aws cloudformation delete-stack --stack-name "$Environment-stack" --region $Region

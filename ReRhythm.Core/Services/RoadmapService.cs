@@ -25,8 +25,12 @@ public class RoadmapService
         string resumeText,
         string targetRole,
         string industry,
-        int yearsOfExperience,
+        int totalYearsOfExperience,
+        int yearsInTargetIndustry,
+        string fullName,
+        string contactInfo,
         string? personalityType,
+        string? customSkills = null,
         CancellationToken ct = default)
     {
         var personalityContext = string.IsNullOrEmpty(personalityType) ? "" : $"""
@@ -35,14 +39,21 @@ public class RoadmapService
             Tailor the learning approach and project types to match their natural strengths and interests.
             """;
 
+        var customSkillsContext = string.IsNullOrEmpty(customSkills) ? "" : $"""
+            
+            IMPORTANT: User wants to learn these specific skills: {customSkills}
+            Include these skills in the 28-day roadmap with dedicated lessons and practice exercises.
+            """;
+
         var query = $"""
             Generate a 28-day micro-sprint roadmap for someone targeting the role of {targetRole}.
             
             Context:
             - Target Role: {targetRole}
             - Industry: {industry}
-            - Years of Experience: {yearsOfExperience}
-            {personalityContext}
+            - Total Years of Experience: {totalYearsOfExperience}
+            - Years in Target Industry: {yearsInTargetIndustry}
+            {personalityContext}{customSkillsContext}
             
             Create 4 weekly modules with:
             - Daily 15-minute learning tasks
@@ -55,7 +66,7 @@ public class RoadmapService
             """;
 
         var ragResponse = await _ragService.RetrieveAndGenerateAsync(
-            query, resumeText, targetRole, industry, yearsOfExperience, ct);
+            query, resumeText, targetRole, industry, totalYearsOfExperience, ct);
 
         // Parse the JSON response from Bedrock
         RoadmapPlan plan;
@@ -101,10 +112,13 @@ public class RoadmapService
         }
 
         plan.UserId = userId;
+        plan.FullName = fullName;
+        plan.ContactInfo = contactInfo;
         plan.OriginalResumeText = resumeText;
         plan.TargetRole = targetRole;
         plan.Industry = industry;
-        plan.YearsOfExperience = yearsOfExperience;
+        plan.TotalYearsOfExperience = totalYearsOfExperience;
+        plan.YearsInTargetIndustry = yearsInTargetIndustry;
         plan.PersonalityType = personalityType;
         plan.Citations = ragResponse.Citations;
 
@@ -142,9 +156,12 @@ public class RoadmapService
 public class RoadmapPlan
 {
     public string UserId { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string ContactInfo { get; set; } = string.Empty;
     public string TargetRole { get; set; } = string.Empty;
     public string Industry { get; set; } = string.Empty;
-    public int YearsOfExperience { get; set; }
+    public int TotalYearsOfExperience { get; set; }
+    public int YearsInTargetIndustry { get; set; }
     public string? PersonalityType { get; set; }
     public string? RawContent { get; set; }
     public string OriginalResumeText { get; set; } = string.Empty;

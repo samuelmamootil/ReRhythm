@@ -34,9 +34,15 @@ public partial class RoadmapController
                 skillsLearned,
                 plan.TargetRole ?? "Software Engineer",
                 plan.Industry ?? "Technology",
-                plan.YearsOfExperience,
+                plan.TotalYearsOfExperience,
                 completedProjects
             );
+
+            // Replace contact info placeholder with actual stored contact
+            if (!string.IsNullOrEmpty(plan.FullName) && !string.IsNullOrEmpty(plan.ContactInfo))
+            {
+                enhancedResume = $"{plan.FullName}\n{plan.ContactInfo}\n\n{enhancedResume}";
+            }
 
             var bytes = Encoding.UTF8.GetBytes(enhancedResume);
             return File(bytes, "text/plain", $"ReRhythm_Enhanced_Resume_{userId}.txt");

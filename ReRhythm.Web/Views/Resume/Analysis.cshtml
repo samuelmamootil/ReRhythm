@@ -64,7 +64,7 @@
               <p class="text-slate-400 text-sm">We'll help you master these in 28 days</p>
             </div>
           </div>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-2" id="skillsToAcquire">
             @foreach (var skill in Model.SkillsToAcquire)
             {
               <span class="bg-slate-800/60 text-slate-300 text-sm px-4 py-2 rounded-full border border-slate-700">@skill</span>
@@ -73,6 +73,36 @@
         </div>
       }
 
+      <!-- Add Custom Skills -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M12 4v16m8-8H4"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Add Custom Skills (Optional)</h2>
+            <p class="text-slate-400 text-sm">Add up to 5 additional skills you want to learn</p>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div class="flex gap-2">
+            <input type="text" id="customSkillInput" placeholder="e.g., Docker, Kubernetes, GraphQL" maxlength="50"
+                   class="flex-1 bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500
+                          focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-colors" />
+            <button type="button" onclick="addCustomSkill()" id="addSkillBtn"
+                    class="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors">
+              Add
+            </button>
+          </div>
+          <div id="customSkillsContainer" class="flex flex-wrap gap-2 min-h-[40px]">
+            <!-- Custom skills will appear here -->
+          </div>
+          <p class="text-xs text-slate-500"><span id="skillCount">0</span>/5 custom skills added</p>
+        </div>
+      </div>
+
       <!-- Summary Stats -->
       <div class="grid md:grid-cols-3 gap-4 mb-8 p-6 bg-slate-800/60 border border-slate-700 rounded-xl">
         <div class="text-center">
@@ -80,7 +110,7 @@
           <div class="text-xs text-slate-400 mt-1">Current Skills</div>
         </div>
         <div class="text-center">
-          <div class="text-3xl font-bold text-sky-400">@Model.SkillsToAcquire.Count</div>
+          <div class="text-3xl font-bold text-sky-400" id="totalSkillsCount">@Model.SkillsToAcquire.Count</div>
           <div class="text-xs text-slate-400 mt-1">Skills to Learn</div>
         </div>
         <div class="text-center">
@@ -90,15 +120,108 @@
       </div>
 
       <!-- Next Step Button -->
-      <a asp-controller="Roadmap" asp-action="Index" asp-route-userId="@Model.UserId"
-         class="glow-btn w-full text-white font-semibold py-4 rounded-xl
-                flex items-center justify-center gap-2 text-base">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-        </svg>
-        View Your 28-Day Roadmap
-      </a>
+      <form id="roadmapForm" method="get" asp-controller="Roadmap" asp-action="Index">
+        <input type="hidden" name="userId" value="@Model.UserId" />
+        <input type="hidden" name="customSkills" id="customSkillsInput" value="" />
+        <button type="submit" id="viewRoadmapBtn"
+                class="glow-btn w-full text-white font-semibold py-4 rounded-xl
+                       flex items-center justify-center gap-2 text-base">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <span id="btnText">View Your 28-Day Roadmap</span>
+          <svg id="btnSpinner" class="hidden animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </form>
 
     </div>
   </div>
 </div>
+
+<script>
+  let customSkills = [];
+  const maxSkills = 5;
+
+  function addCustomSkill() {
+    const input = document.getElementById('customSkillInput');
+    const skill = input.value.trim();
+    
+    if (!skill) return;
+    
+    if (customSkills.length >= maxSkills) {
+      alert(`Maximum ${maxSkills} custom skills allowed`);
+      return;
+    }
+    
+    if (customSkills.includes(skill)) {
+      alert('Skill already added');
+      return;
+    }
+    
+    customSkills.push(skill);
+    input.value = '';
+    renderCustomSkills();
+    updateSkillCount();
+  }
+
+  function removeCustomSkill(skill) {
+    customSkills = customSkills.filter(s => s !== skill);
+    renderCustomSkills();
+    updateSkillCount();
+  }
+
+  function renderCustomSkills() {
+    const container = document.getElementById('customSkillsContainer');
+    container.innerHTML = customSkills.map(skill => `
+      <span class="bg-emerald-500/20 text-emerald-300 text-sm px-4 py-2 rounded-full border border-emerald-500/30 flex items-center gap-2">
+        ${skill}
+        <button type="button" onclick="removeCustomSkill('${skill}')" class="hover:text-red-400 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </span>
+    `).join('');
+    
+    // Update hidden input
+    document.getElementById('customSkillsInput').value = customSkills.join(',');
+  }
+
+  function updateSkillCount() {
+    document.getElementById('skillCount').textContent = customSkills.length;
+    document.getElementById('totalSkillsCount').textContent = @Model.SkillsToAcquire.Count + customSkills.length;
+    
+    const addBtn = document.getElementById('addSkillBtn');
+    if (customSkills.length >= maxSkills) {
+      addBtn.disabled = true;
+      addBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      addBtn.disabled = false;
+      addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+  }
+
+  // Allow Enter key to add skill
+  document.getElementById('customSkillInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomSkill();
+    }
+  });
+
+  // Show loading animation if custom skills added
+  document.getElementById('roadmapForm').addEventListener('submit', (e) => {
+    if (customSkills.length > 0) {
+      const btn = document.getElementById('viewRoadmapBtn');
+      const btnText = document.getElementById('btnText');
+      const spinner = document.getElementById('btnSpinner');
+      
+      btn.disabled = true;
+      btnText.textContent = 'Generating Roadmap...';
+      spinner.classList.remove('hidden');
+    }
+  });
+</script>

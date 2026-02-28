@@ -19,9 +19,11 @@
   </ImportGroup>
   <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <PkgMicrosoft_Extensions_ApiDescription_Server Condition=" '$(PkgMicrosoft_Extensions_ApiDescription_Server)' == '' ">C:\Users\mamoo\.nuget\packages\microsoft.extensions.apidescription.server\8.0.0</PkgMicrosoft_Extensions_ApiDescription_Server>
-    <PkgAWSSDK_Core Condition=" '$(PkgAWSSDK_Core)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.core\4.0.3.12</PkgAWSSDK_Core>
+    <PkgAWSSDK_Core Condition=" '$(PkgAWSSDK_Core)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.core\4.0.3.15</PkgAWSSDK_Core>
     <PkgAWSSDK_Textract Condition=" '$(PkgAWSSDK_Textract)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.textract\4.0.3.13</PkgAWSSDK_Textract>
+    <PkgAWSSDK_SimpleEmail Condition=" '$(PkgAWSSDK_SimpleEmail)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.simpleemail\4.0.2.14</PkgAWSSDK_SimpleEmail>
     <PkgAWSSDK_S3 Condition=" '$(PkgAWSSDK_S3)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.s3\4.0.18.6</PkgAWSSDK_S3>
+    <PkgAWSSDK_Rekognition Condition=" '$(PkgAWSSDK_Rekognition)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.rekognition\4.0.3.13</PkgAWSSDK_Rekognition>
     <PkgAWSSDK_DynamoDBv2 Condition=" '$(PkgAWSSDK_DynamoDBv2)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.dynamodbv2\4.0.14</PkgAWSSDK_DynamoDBv2>
     <PkgAWSSDK_BedrockRuntime Condition=" '$(PkgAWSSDK_BedrockRuntime)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.bedrockruntime\4.0.9</PkgAWSSDK_BedrockRuntime>
     <PkgAWSSDK_BedrockAgentRuntime Condition=" '$(PkgAWSSDK_BedrockAgentRuntime)' == '' ">C:\Users\mamoo\.nuget\packages\awssdk.bedrockagentruntime\4.0.8.8</PkgAWSSDK_BedrockAgentRuntime>

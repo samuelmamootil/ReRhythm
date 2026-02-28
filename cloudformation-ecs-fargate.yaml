@@ -378,6 +378,91 @@ Resources:
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
 
+  ForumQuestionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvironmentName}-forum-questions"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: QuestionId
+          AttributeType: S
+        - AttributeName: Industry
+          AttributeType: S
+        - AttributeName: CreatedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: QuestionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: Industry-CreatedAt-Index
+          KeySchema:
+            - AttributeName: Industry
+              KeyType: HASH
+            - AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  ForumAnswersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvironmentName}-forum-answers"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: AnswerId
+          AttributeType: S
+        - AttributeName: QuestionId
+          AttributeType: S
+        - AttributeName: CreatedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: AnswerId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: QuestionId-CreatedAt-Index
+          KeySchema:
+            - AttributeName: QuestionId
+              KeyType: HASH
+            - AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  ForumImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${EnvironmentName}-forum-images-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !Ref S3KMSKey
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: ["*"]
+            AllowedMethods: [GET]
+            AllowedHeaders: ["*"]
+
   # ═══════════════════════════════════════════════════════════════
   # APPLICATION LOAD BALANCER
   # ═══════════════════════════════════════════════════════════════
@@ -522,6 +607,8 @@ Resources:
                 Resource:
                   - !Sub "${ResumeUploadBucket.Arn}/*"
                   - !GetAtt ResumeUploadBucket.Arn
+                  - !Sub "${ForumImagesBucket.Arn}/*"
+                  - !GetAtt ForumImagesBucket.Arn
         - PolicyName: DynamoDBAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -537,6 +624,10 @@ Resources:
                   - !GetAtt RoadmapResponseTable.Arn
                   - !GetAtt LessonPlanTable.Arn
                   - !GetAtt BadgeAchievementTable.Arn
+                  - !GetAtt ForumQuestionsTable.Arn
+                  - !GetAtt ForumAnswersTable.Arn
+                  - !Sub "${ForumQuestionsTable.Arn}/index/*"
+                  - !Sub "${ForumAnswersTable.Arn}/index/*"
         - PolicyName: BedrockAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -556,6 +647,23 @@ Resources:
                 Action:
                   - "textract:AnalyzeDocument"
                   - "textract:DetectDocumentText"
+                Resource: "*"
+        - PolicyName: RekognitionAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "rekognition:DetectModerationLabels"
+                Resource: "*"
+        - PolicyName: SESAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ses:SendEmail"
+                  - "ses:SendRawEmail"
                 Resource: "*"
         - PolicyName: KMSAccess
           PolicyDocument:
@@ -604,6 +712,12 @@ Resources:
               Value: !Ref LessonPlanTable
             - Name: ReRhythm__BadgeTableName
               Value: !Ref BadgeAchievementTable
+            - Name: ReRhythm__ForumQuestionsTable
+              Value: !Ref ForumQuestionsTable
+            - Name: ReRhythm__ForumAnswersTable
+              Value: !Ref ForumAnswersTable
+            - Name: ReRhythm__ForumImagesBucket
+              Value: !Ref ForumImagesBucket
             - Name: ReRhythm__RagMode
               Value: DIRECT
             - Name: ReRhythm__MaxTokens

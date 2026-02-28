@@ -39,7 +39,8 @@ public class ResumeController : Controller
         [FromForm] string targetRole,
         [FromForm] string userId,
         [FromForm] string industry,
-        [FromForm] int yearsOfExperience,
+        [FromForm] int totalYearsOfExperience,
+        [FromForm] int yearsInTargetIndustry,
         [FromForm] string? personalityType,
         CancellationToken ct)
     {
@@ -71,11 +72,12 @@ public class ResumeController : Controller
             }
 
             await using var stream = resume.OpenReadStream();
-            var resumeText = await _textract.UploadAndParseResumeAsync(
-            stream, resume.FileName, userId, ct);
+            var (resumeText, fullName, contactInfo) = await _textract.UploadAndParseResumeAsync(
+                stream, resume.FileName, userId, ct);
 
             var plan = await _roadmap.GenerateRoadmapAsync(
-                userId, resumeText, targetRole, industry, yearsOfExperience, personalityType, ct);
+                userId, resumeText, targetRole, industry, totalYearsOfExperience, yearsInTargetIndustry, 
+                fullName, contactInfo, personalityType, null, ct);
 
             return Json(new { success = true, redirectUrl = Url.Action("Analysis", new { userId }) });
         }

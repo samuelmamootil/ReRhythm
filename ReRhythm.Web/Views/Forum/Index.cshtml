@@ -1,0 +1,146 @@
+@model List<ReRhythm.Core.Models.ForumQuestion>
+@{
+    ViewData["Title"] = "Community Forum";
+    var userId = ViewBag.UserId;
+    var userName = ViewBag.UserName;
+    var industry = ViewBag.Industry;
+}
+
+<div class="hero-bg min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-16">
+    
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-extrabold mb-4">
+        Community <span class="beat-text">Forum</span>
+      </h1>
+      <p class="text-slate-400 text-lg">Ask questions, share knowledge, help others in @industry</p>
+    </div>
+
+    <!-- Post Question Button -->
+    <div class="mb-8">
+      <button onclick="showPostModal()" class="glow-btn px-6 py-3 rounded-xl font-semibold flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M12 4v16m8-8H4"/>
+        </svg>
+        Ask a Question
+      </button>
+    </div>
+
+    <!-- Questions List -->
+    <div class="space-y-4">
+      @foreach (var q in Model.OrderByDescending(x => x.CreatedAt))
+      {
+        <div class="glass-card rounded-xl p-6 hover:border-sky-500/50 transition-colors cursor-pointer"
+             onclick="location.href='@Url.Action("Question", new { id = q.QuestionId, userId })'">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-white mb-2">@q.Title</h3>
+              <p class="text-slate-400 text-sm mb-3 line-clamp-2">@q.Content</p>
+              <div class="flex items-center gap-4 text-xs text-slate-500">
+                <span>@q.UserName</span>
+                <span>@q.CreatedAt.ToString("MMM dd, yyyy")</span>
+                <span>@q.ViewCount views</span>
+                @if (q.ImageUrls.Any())
+                {
+                  <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    @q.ImageUrls.Count
+                  </span>
+                }
+              </div>
+            </div>
+            @if (q.AcceptedAnswerId != null)
+            {
+              <div class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold">
+                ✓ Solved
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+  </div>
+</div>
+
+<!-- Post Question Modal -->
+<div id="postModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+  <div class="glass-card rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <h2 class="text-2xl font-bold text-white mb-6">Ask a Question</h2>
+    
+    <form id="postForm" enctype="multipart/form-data">
+      <input type="hidden" name="userId" value="@userId" />
+      
+      <div class="mb-4">
+        <label class="block text-slate-300 mb-2 font-semibold">Title</label>
+        <input type="text" name="title" required maxlength="200"
+               class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white
+                      focus:outline-none focus:border-sky-500" />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-slate-300 mb-2 font-semibold">Description</label>
+        <textarea name="content" required rows="6" maxlength="2000"
+                  class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white
+                         focus:outline-none focus:border-sky-500"></textarea>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-slate-300 mb-2 font-semibold">Images (Max 2, Optional)</label>
+        <input type="file" name="images" accept="image/*" multiple
+               class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white" />
+        <p class="text-xs text-slate-500 mt-1">Images will be checked for inappropriate content</p>
+      </div>
+
+      <div class="flex gap-3">
+        <button type="submit" class="glow-btn px-6 py-3 rounded-xl font-semibold flex-1">
+          Post Question
+        </button>
+        <button type="button" onclick="hidePostModal()"
+                class="bg-slate-700 hover:bg-slate-600 px-6 py-3 rounded-xl font-semibold text-white">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function showPostModal() {
+    document.getElementById('postModal').classList.remove('hidden');
+  }
+
+  function hidePostModal() {
+    document.getElementById('postModal').classList.add('hidden');
+  }
+
+  let isSubmitting = false;
+  document.getElementById('postForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    isSubmitting = true;
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Posting...';
+    
+    const formData = new FormData(e.target);
+    
+    const response = await fetch('@Url.Action("PostQuestion")', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      location.reload();
+    } else {
+      alert(result.error);
+      isSubmitting = false;
+      btn.disabled = false;
+      btn.textContent = 'Post Question';
+    }
+  });
+</script>
