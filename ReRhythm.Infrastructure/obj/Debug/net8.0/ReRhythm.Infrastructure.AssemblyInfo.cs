@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ReRhythm.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+464d3120670ad9e12b6dda69b8301027c921cd27")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+75c60441828957cd26d8a56b035748ff2c39d7c6")]
 [assembly: System.Reflection.AssemblyProductAttribute("ReRhythm.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ReRhythm.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

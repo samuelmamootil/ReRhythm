@@ -412,26 +412,32 @@
     window.selectedCount = 0;
   }
 
+  window.activityWeights = {};  // Store weights for each activity
+
   window.selectActivity = function(index, type) {
     const progress = document.getElementById(`progress-${index}`);
     const card = event.currentTarget;
     
     if (progress.classList.contains('bg-sky-500')) {
-      // Deselect
-      progress.classList.remove('bg-sky-500');
-      progress.classList.add('bg-slate-700');
-      card.classList.remove('border-sky-500', 'bg-sky-500/20');
-      card.classList.add('border-slate-700');
-      personalityScores[type]--;
-      window.selectedCount--;
+      // Already selected - show rating slider
+      showRatingSlider(card, index, type);
     } else {
-      // Select
+      // First selection - select with default weight of 3
       progress.classList.remove('bg-slate-700');
       progress.classList.add('bg-sky-500');
       card.classList.remove('border-slate-700');
       card.classList.add('border-sky-500', 'bg-sky-500/20');
-      personalityScores[type]++;
+      
+      window.activityWeights[index] = 3;  // Default weight
+      personalityScores[type] = (personalityScores[type] || 0) + 3;
       window.selectedCount++;
+      
+      // Show rating indicator
+      const ratingDiv = document.createElement('div');
+      ratingDiv.id = `rating-${index}`;
+      ratingDiv.className = 'text-xs text-sky-300 mt-2';
+      ratingDiv.innerHTML = '★★★☆☆';
+      card.appendChild(ratingDiv);
     }
     
     // Enable finish button if at least 6 selected
@@ -440,6 +446,110 @@
       finishBtn.classList.remove('bg-slate-600', 'hover:bg-slate-700');
       finishBtn.classList.add('bg-sky-500', 'hover:bg-sky-600');
     } else {
+      finishBtn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
+      finishBtn.classList.add('bg-slate-600', 'hover:bg-slate-700');
+    }
+  };
+
+  window.showRatingSlider = function(card, index, type) {
+    const currentWeight = window.activityWeights[index] || 3;
+    
+    // Create modal for rating
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-950/95 z-50 flex items-center justify-center p-4';
+    modal.innerHTML = `
+      <div class="glass-card rounded-2xl p-8 border border-slate-700 max-w-md w-full">
+        <h3 class="text-xl font-bold text-white mb-4">How much do you enjoy this?</h3>
+        <p class="text-slate-400 mb-6">${personalityQuestions[index].text}</p>
+        
+        <div class="mb-6">
+          <div class="flex justify-between text-sm text-slate-400 mb-2">
+            <span>Not much</span>
+            <span>Very much</span>
+          </div>
+          <input type="range" id="weightSlider" min="1" max="5" value="${currentWeight}" 
+                 class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                 style="accent-color: #38BDF8;" />
+          <div class="text-center mt-3">
+            <span id="ratingDisplay" class="text-3xl">★★★☆☆</span>
+          </div>
+        </div>
+        
+        <div class="flex gap-3">
+          <button onclick="removeActivity(${index}, '${type}')" 
+                  class="flex-1 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold rounded-xl transition-colors">
+            Remove
+          </button>
+          <button onclick="saveRating(${index}, '${type}')" 
+                  class="flex-1 px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-xl transition-colors">
+            Save
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    window.currentRatingModal = modal;
+    
+    // Update rating display on slider change
+    const slider = modal.querySelector('#weightSlider');
+    const display = modal.querySelector('#ratingDisplay');
+    slider.addEventListener('input', function() {
+      const stars = '★'.repeat(this.value) + '☆'.repeat(5 - this.value);
+      display.textContent = stars;
+    });
+  };
+
+  window.saveRating = function(index, type) {
+    const slider = document.querySelector('#weightSlider');
+    const newWeight = parseInt(slider.value);
+    const oldWeight = window.activityWeights[index] || 3;
+    
+    // Update scores
+    personalityScores[type] = (personalityScores[type] || 0) - oldWeight + newWeight;
+    window.activityWeights[index] = newWeight;
+    
+    // Update visual indicator
+    const ratingDiv = document.getElementById(`rating-${index}`);
+    if (ratingDiv) {
+      ratingDiv.innerHTML = '★'.repeat(newWeight) + '☆'.repeat(5 - newWeight);
+    }
+    
+    // Close modal
+    if (window.currentRatingModal) {
+      window.currentRatingModal.remove();
+      window.currentRatingModal = null;
+    }
+  };
+
+  window.removeActivity = function(index, type) {
+    const progress = document.getElementById(`progress-${index}`);
+    const card = document.querySelector(`[onclick*="selectActivity(${index}"]`);
+    const ratingDiv = document.getElementById(`rating-${index}`);
+    
+    // Remove selection
+    progress.classList.remove('bg-sky-500');
+    progress.classList.add('bg-slate-700');
+    card.classList.remove('border-sky-500', 'bg-sky-500/20');
+    card.classList.add('border-slate-700');
+    
+    // Update scores
+    const weight = window.activityWeights[index] || 3;
+    personalityScores[type] = (personalityScores[type] || 0) - weight;
+    delete window.activityWeights[index];
+    window.selectedCount--;
+    
+    // Remove rating indicator
+    if (ratingDiv) ratingDiv.remove();
+    
+    // Close modal
+    if (window.currentRatingModal) {
+      window.currentRatingModal.remove();
+      window.currentRatingModal = null;
+    }
+    
+    // Update finish button
+    const finishBtn = document.getElementById('finishTest');
+    if (window.selectedCount < 6) {
       finishBtn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
       finishBtn.classList.add('bg-slate-600', 'hover:bg-slate-700');
     }
@@ -461,29 +571,43 @@
   };
 
   window.finishPersonalityTest = function() {
-    // Calculate top 2 types
+    // Calculate ALL types with weighted scores above 60% threshold
     const sorted = Object.entries(personalityScores)
       .sort((a, b) => b[1] - a[1])
-      .filter(([_, score]) => score > 0)
-      .slice(0, 2);
+      .filter(([_, score]) => score > 0);
     
     if (sorted.length === 0) return;
     
     const primaryType = sorted[0][0];
-    const secondaryType = sorted.length > 1 ? sorted[1][0] : null;
+    const primaryScore = sorted[0][1];
     
-    const result = secondaryType 
-      ? `${riasecTypes[primaryType].name} + ${riasecTypes[secondaryType].name}`
-      : riasecTypes[primaryType].name;
+    // Include ALL types that are at least 60% of primary score
+    const significantTypes = sorted.filter(([type, score]) => 
+      (score / primaryScore) >= 0.6
+    );
+    
+    // Build result string with all significant types
+    const typeNames = significantTypes.map(([type]) => riasecTypes[type].name);
+    const result = typeNames.length === 1 
+      ? typeNames[0]
+      : typeNames.slice(0, -1).join(' + ') + ' + ' + typeNames[typeNames.length - 1];
+    
+    // Build personality code (e.g., "R-I-A" or "R-I-S-E")
+    const personalityCode = significantTypes.map(([type]) => type).join('-');
     
     // Show personality type and target role context
     const targetRole = roleSelect.value;
     const industry = industrySelect.value;
     
+    // Show result with score breakdown
+    const scoreBreakdown = sorted.map(([type, score]) => `${type}:${score}`).join(', ');
+    console.log('RIASEC Scores:', scoreBreakdown);
+    console.log('Significant types (≥60%):', personalityCode);
+    
     // Show result
     document.getElementById('personalityType').textContent = `${result} • Tailored for ${targetRole} in ${industry}`;
     document.getElementById('personalityResult').classList.remove('hidden');
-    document.getElementById('personalityTypeInput').value = `${primaryType}${secondaryType ? '-' + secondaryType : ''}`;
+    document.getElementById('personalityTypeInput').value = personalityCode;
     document.getElementById('startPersonalityTest').textContent = 'Retake Quiz';
     document.getElementById('startPersonalityTest').classList.remove('bg-sky-500', 'hover:bg-sky-600');
     document.getElementById('startPersonalityTest').classList.add('bg-slate-800', 'hover:bg-slate-700', 'text-white');;
