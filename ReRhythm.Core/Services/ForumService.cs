@@ -22,6 +22,7 @@ public class ForumService
     private readonly string _questionsTable;
     private readonly string _answersTable;
     private readonly string _bucketName;
+    private readonly string _region;
 
     public ForumService(
         IAmazonDynamoDB dynamoDb,
@@ -41,6 +42,7 @@ public class ForumService
         _questionsTable = config["ReRhythm:ForumQuestionsTable"] ?? "rerythm-prod-forum-questions";
         _answersTable = config["ReRhythm:ForumAnswersTable"] ?? "rerythm-prod-forum-answers";
         _bucketName = config["ReRhythm:ForumImagesBucket"] ?? "rerythm-prod-forum-images-250025622388";
+        _region = config["AWS:Region"] ?? "us-east-1";
     }
 
     public async Task<(bool IsAppropriate, string Reason)> ModerateImageAsync(Stream imageStream, CancellationToken ct)
@@ -68,16 +70,35 @@ public class ForumService
 
     public async Task<string> UploadImageAsync(Stream imageStream, string fileName, CancellationToken ct)
     {
-        var key = $"forum/{Guid.NewGuid()}/{fileName}";
+        imageStream.Position = 0;
+        
+        var extension = Path.GetExtension(fileName);
+        var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
+        var sanitizedName = System.Text.RegularExpressions.Regex.Replace(nameWithoutExt, @"[^a-zA-Z0-9]+", "_").Trim('_');
+        var sanitizedFileName = sanitizedName + extension;
+        var key = $"forum/{Guid.NewGuid()}/{sanitizedFileName}";
+        
         await _s3.PutObjectAsync(new PutObjectRequest
         {
             BucketName = _bucketName,
             Key = key,
             InputStream = imageStream,
-            ContentType = "image/jpeg"
+            ContentType = GetContentType(extension)
         }, ct);
 
-        return $"https://{_bucketName}.s3.amazonaws.com/{key}";
+        return $"https://{_bucketName}.s3.{_region}.amazonaws.com/{key}";
+    }
+    
+    private string GetContentType(string extension)
+    {
+        return extension.ToLower() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            _ => "image/jpeg"
+        };
     }
 
     public async Task<string> PostQuestionAsync(ForumQuestion question, CancellationToken ct)
@@ -129,6 +150,29 @@ public class ForumService
         }, ct);
 
         return answer.AnswerId;
+    }
+
+    public async Task<List<ForumQuestion>> GetAllQuestionsAsync(CancellationToken ct)
+    {
+        var response = await _dynamoDb.ScanAsync(new ScanRequest
+        {
+            TableName = _questionsTable,
+            Limit = 50
+        }, ct);
+
+        return response.Items.Select(item => new ForumQuestion
+        {
+            QuestionId = item["QuestionId"].S,
+            UserId = item["UserId"].S,
+            UserName = item["UserName"].S,
+            Industry = item["Industry"].S,
+            Title = item["Title"].S,
+            Content = item["Content"].S,
+            CreatedAt = DateTime.Parse(item["CreatedAt"].S),
+            AcceptedAnswerId = item.ContainsKey("AcceptedAnswerId") ? item["AcceptedAnswerId"].S : null,
+            ViewCount = int.Parse(item["ViewCount"].N),
+            ImageUrls = item.ContainsKey("ImageUrls") ? item["ImageUrls"].SS : new List<string>()
+        }).OrderByDescending(q => q.CreatedAt).ToList();
     }
 
     public async Task<List<ForumQuestion>> GetQuestionsByIndustryAsync(string industry, CancellationToken ct)
@@ -252,6 +296,35 @@ public class ForumService
             ExpressionAttributeValues = new Dictionary<string, AttributeValue>
             {
                 [":aid"] = new AttributeValue { S = answerId }
+            }
+        }, ct);
+    }
+
+    public async Task IncrementViewCountAsync(string questionId, CancellationToken ct)
+    {
+        await _dynamoDb.UpdateItemAsync(new UpdateItemRequest
+        {
+            TableName = _questionsTable,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                ["QuestionId"] = new AttributeValue { S = questionId }
+            },
+            UpdateExpression = "ADD ViewCount :inc",
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                [":inc"] = new AttributeValue { N = "1" }
+            }
+        }, ct);
+    }
+
+    public async Task DeleteQuestionAsync(string questionId, CancellationToken ct)
+    {
+        await _dynamoDb.DeleteItemAsync(new DeleteItemRequest
+        {
+            TableName = _questionsTable,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                ["QuestionId"] = new AttributeValue { S = questionId }
             }
         }, ct);
     }

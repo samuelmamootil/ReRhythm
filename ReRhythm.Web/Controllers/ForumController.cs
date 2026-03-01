@@ -18,34 +18,58 @@ public class ForumController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index(string userId, CancellationToken ct)
+    public async Task<IActionResult> Index(string? userId, CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(userId))
-            return RedirectToAction("Upload", "Resume");
+        RoadmapPlan? plan = null;
+        if (!string.IsNullOrEmpty(userId))
+            plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
 
-        var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
-        if (plan is null)
-            return RedirectToAction("Upload", "Resume");
-
-        var questions = await _forumService.GetQuestionsByIndustryAsync(plan.Industry, ct);
+        // Guests see all questions, logged-in users see their industry
+        var industry = plan?.Industry ?? "All";
+        var questions = string.IsNullOrEmpty(userId) 
+            ? await _forumService.GetAllQuestionsAsync(ct)
+            : await _forumService.GetQuestionsByIndustryAsync(industry, ct);
         
-        ViewBag.UserId = userId;
-        ViewBag.UserName = plan.FullName;
-        ViewBag.Industry = plan.Industry;
+        var userName = plan?.FullName?.Split('\n')[0]?.Trim() ?? "Guest";
+        if (userName.Length > 50)
+        {
+            userName = "Guest";
+        }
+        
+        ViewBag.UserId = userId ?? "";
+        ViewBag.UserName = userName;
+        ViewBag.Industry = industry;
+        ViewBag.IsGuest = string.IsNullOrEmpty(userId) || plan is null;
+        ViewBag.SubscriptionTier = plan?.SubscriptionTier ?? "Basic";
         return View(questions);
     }
 
     [HttpGet]
-    public async Task<IActionResult> Question(string id, string userId, CancellationToken ct)
+    public async Task<IActionResult> Question(string id, string? userId, CancellationToken ct)
     {
         var question = await _forumService.GetQuestionAsync(id, ct);
         if (question is null)
             return NotFound();
 
+        await _forumService.IncrementViewCountAsync(id, ct);
+        
         var answers = await _forumService.GetAnswersAsync(id, ct);
         
-        ViewBag.UserId = userId;
+        RoadmapPlan? plan = null;
+        if (!string.IsNullOrEmpty(userId))
+            plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
+        
+        var userName = plan?.FullName?.Split('\n')[0]?.Trim() ?? "Guest";
+        if (userName.Length > 50)
+        {
+            userName = "Guest";
+        }
+        
+        ViewBag.UserId = userId ?? "";
+        ViewBag.UserName = userName;
         ViewBag.Answers = answers;
+        ViewBag.IsGuest = string.IsNullOrEmpty(userId) || plan is null;
+        ViewBag.SubscriptionTier = plan?.SubscriptionTier ?? "Basic";
         return View(question);
     }
 
@@ -60,6 +84,10 @@ public class ForumController : Controller
     {
         try
         {
+            _logger.LogInformation("PostQuestion - UserId: {UserId}, Title: {Title}, Content length: {Length}", 
+                userId, title, content?.Length ?? 0);
+            _logger.LogInformation("Content preview: {Content}", content?.Substring(0, Math.Min(100, content?.Length ?? 0)));
+
             var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
             if (plan is null)
                 return Json(new { success = false, error = "User not found" });
@@ -73,21 +101,23 @@ public class ForumController : Controller
                 foreach (var image in images)
                 {
                     using var stream = image.OpenReadStream();
-                    var (isAppropriate, reason) = await _forumService.ModerateImageAsync(stream, ct);
-                    
-                    if (!isAppropriate)
-                        return Json(new { success = false, error = reason });
-
-                    stream.Position = 0;
                     var url = await _forumService.UploadImageAsync(stream, image.FileName, ct);
                     imageUrls.Add(url);
                 }
             }
 
+            var fullName = plan.FullName?.Split('\n')[0]?.Trim() ?? "Anonymous";
+            
+            // Extra safeguard: if name is too long, it's likely the entire resume
+            if (fullName.Length > 50)
+            {
+                fullName = "User";
+            }
+            
             var question = new ForumQuestion
             {
                 UserId = userId,
-                UserName = plan.FullName,
+                UserName = fullName,
                 Industry = plan.Industry,
                 Title = title,
                 Content = content,
@@ -95,6 +125,35 @@ public class ForumController : Controller
             };
 
             var questionId = await _forumService.PostQuestionAsync(question, ct);
+            
+            // Moderate images in background
+            if (imageUrls.Any())
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        foreach (var imageUrl in imageUrls)
+                        {
+                            using var httpClient = new HttpClient();
+                            var imageStream = await httpClient.GetStreamAsync(imageUrl);
+                            var (isAppropriate, _) = await _forumService.ModerateImageAsync(imageStream, CancellationToken.None);
+                            
+                            if (!isAppropriate)
+                            {
+                                await _forumService.DeleteQuestionAsync(questionId, CancellationToken.None);
+                                _logger.LogWarning($"Question {questionId} deleted due to inappropriate image");
+                                break;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error moderating images for question {questionId}");
+                    }
+                });
+            }
+            
             return Json(new { success = true, questionId });
         }
         catch (Exception ex)
@@ -108,18 +167,15 @@ public class ForumController : Controller
     public async Task<IActionResult> PostAnswer(
         string questionId,
         string userId,
+        string userName,
         string content,
         CancellationToken ct)
     {
-        var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
-        if (plan is null)
-            return Json(new { success = false, error = "User not found" });
-
         var answer = new ForumAnswer
         {
             QuestionId = questionId,
             UserId = userId,
-            UserName = plan.FullName,
+            UserName = userName,
             Content = content
         };
 

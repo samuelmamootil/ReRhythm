@@ -39,6 +39,7 @@ public class DynamoDbService
             ["fullName"]    = new AttributeValue { S = plan.FullName },
             ["contactInfo"] = new AttributeValue { S = plan.ContactInfo },
             ["personalityType"] = new AttributeValue { S = plan.PersonalityType ?? "" },
+            ["subscriptionTier"] = new AttributeValue { S = plan.SubscriptionTier },
             ["roadmapJson"] = new AttributeValue { S = JsonSerializer.Serialize(plan) },
             // TTL: keep active profiles for 30 days per privacy policy
             ["ttl"] = new AttributeValue

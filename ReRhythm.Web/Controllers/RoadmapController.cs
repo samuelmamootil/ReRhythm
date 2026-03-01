@@ -75,6 +75,7 @@ public partial class RoadmapController : Controller
         ViewBag.ProgressPercent = totalLessons > 0 ? (int)((completedCount / (double)totalLessons) * 100) : 0;
         ViewBag.AllLessons = allLessons;
         ViewBag.BadgeCount = badgeCount;
+        ViewBag.SubscriptionTier = plan.SubscriptionTier ?? "Basic";
 
         return View(plan);
     }
@@ -111,7 +112,16 @@ public partial class RoadmapController : Controller
         CancellationToken ct)
     {
         var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
-        var module = plan?.Modules.FirstOrDefault(m => m.WeekNumber == weekNumber);
+        
+        if (plan is null)
+            return NotFound("Plan not found.");
+        
+        // Check subscription tier
+        var tier = plan.SubscriptionTier ?? "Basic";
+        if (tier != "Gold")
+            return RedirectToAction("Upgrade", "Premium");
+        
+        var module = plan.Modules.FirstOrDefault(m => m.WeekNumber == weekNumber);
 
         if (module is null)
             return NotFound("Module not found.");
@@ -141,6 +151,7 @@ public partial class RoadmapController : Controller
         ViewBag.TotalLessons = totalLessons;
         ViewBag.ProgressPercent = totalLessons > 0 ? (int)((completedCount / (double)totalLessons) * 100) : 0;
         ViewBag.AllLessons = allLessons;
+        ViewBag.SubscriptionTier = plan.SubscriptionTier ?? "Basic";
 
         return View(plan);
     }
@@ -170,13 +181,18 @@ public partial class RoadmapController : Controller
     [HttpPost]
     public async Task<IActionResult> CompleteLesson(string userId, int weekNumber, int dayNumber, CancellationToken ct)
     {
+        var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
+        var tier = plan?.SubscriptionTier ?? "Basic";
+        
+        if (tier != "Gold")
+            return Json(new { success = false, error = "Premium feature" });
+        
         var moduleId = $"week{weekNumber}-day{dayNumber}";
         _logger.LogInformation("Marking lesson complete: userId={UserId}, moduleId={ModuleId}", userId, moduleId);
         
         await _dynamoDb.MarkLessonCompleteAsync(userId, moduleId, ct);
         
         var completedCount = await _dynamoDb.GetCompletedLessonCountAsync(userId, ct);
-        var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
         var totalLessons = plan?.Modules.Sum(m => m.DailySprints.Count) ?? 0;
         var progressPercent = totalLessons > 0 ? (int)((completedCount / (double)totalLessons) * 100) : 0;
         
@@ -216,8 +232,14 @@ public partial class RoadmapController : Controller
 
         var certificateService = HttpContext.RequestServices.GetRequiredService<CertificateService>();
         var pdfBytes = certificateService.GenerateCompletionCertificate(plan, completedLessons);
-
-        return File(pdfBytes, "application/pdf", $"ReRhythm_Certificate_{userId}_{DateTime.UtcNow:yyyyMMdd}.pdf");
+        
+        var userName = plan.FullName?.Split('\n')[0]?.Trim();
+        if (string.IsNullOrWhiteSpace(userName) || userName.Length > 50)
+            userName = userId;
+        else
+            userName = userName.Replace(" ", "_");
+        
+        return File(pdfBytes, "application/pdf", $"ReRhythm_Certificate_{userName}_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 
     // GET /Roadmap/DownloadResume?userId=xxx

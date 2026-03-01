@@ -101,6 +101,7 @@ public class ResumeController : Controller
         var plan = await dynamoDb.GetLatestRoadmapAsync(userId, ct);
         if (plan is null)
             return RedirectToAction("Upload");
+        ViewBag.SubscriptionTier = plan.SubscriptionTier ?? "Basic";
         return View(plan);
     }
 }

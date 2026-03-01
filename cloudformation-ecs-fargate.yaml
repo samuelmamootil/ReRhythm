@@ -449,9 +449,7 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
-              SSEAlgorithm: aws:kms
-              KMSMasterKeyID: !Ref S3KMSKey
-            BucketKeyEnabled: true
+              SSEAlgorithm: AES256
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
         BlockPublicPolicy: false
@@ -462,6 +460,19 @@ Resources:
           - AllowedOrigins: ["*"]
             AllowedMethods: [GET]
             AllowedHeaders: ["*"]
+
+  ForumImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ForumImagesBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "${ForumImagesBucket.Arn}/*"
 
   # ═══════════════════════════════════════════════════════════════
   # APPLICATION LOAD BALANCER
@@ -618,6 +629,7 @@ Resources:
                   - "dynamodb:GetItem"
                   - "dynamodb:PutItem"
                   - "dynamodb:UpdateItem"
+                  - "dynamodb:DeleteItem"
                   - "dynamodb:Query"
                   - "dynamodb:Scan"
                 Resource:

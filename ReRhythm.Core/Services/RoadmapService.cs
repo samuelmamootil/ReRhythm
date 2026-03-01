@@ -170,6 +170,7 @@ public class RoadmapPlan
     public List<CitationSource> Citations { get; set; } = [];
     public List<string> SkillsIdentified { get; set; } = [];
     public List<string> SkillsToAcquire { get; set; } = [];
+    public string SubscriptionTier { get; set; } = "Basic";
 }
 
 public class WeeklyModule

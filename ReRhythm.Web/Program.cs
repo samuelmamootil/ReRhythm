@@ -5,6 +5,9 @@ using Amazon.Textract;
 using Amazon.Rekognition;
 using Amazon.SimpleEmail;
 using ReRhythm.Core.Services;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +34,7 @@ builder.Services.AddScoped<ForumService>();
 builder.Services.AddScoped<ResumeBuilderService>(sp => 
     new ResumeBuilderService(
         sp.GetRequiredService<IAmazonBedrockRuntime>(),
-        "us.anthropic.claude-sonnet-4-20250514-v1:0"
+        sp.GetRequiredService<IConfiguration>()["ReRhythm:BedrockModelId"] ?? "us.anthropic.claude-sonnet-4-20250514-v1:0"
     )
 );
 

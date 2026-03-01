@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using ReRhythm.Core.Services;
 using System.Text;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace ReRhythm.Web.Controllers;
 
@@ -38,14 +41,43 @@ public partial class RoadmapController
                 completedProjects
             );
 
-            // Replace contact info placeholder with actual stored contact
-            if (!string.IsNullOrEmpty(plan.FullName) && !string.IsNullOrEmpty(plan.ContactInfo))
-            {
-                enhancedResume = $"{plan.FullName}\n{plan.ContactInfo}\n\n{enhancedResume}";
-            }
+            // AI already includes name and contact in the resume, don't prepend again
 
-            var bytes = Encoding.UTF8.GetBytes(enhancedResume);
-            return File(bytes, "text/plain", $"ReRhythm_Enhanced_Resume_{userId}.txt");
+            var pdfBytes = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(2, Unit.Centimetre);
+                    page.DefaultTextStyle(x => x.FontSize(11).FontFamily(Fonts.Calibri));
+
+                    page.Content().Column(column =>
+                    {
+                        var lines = enhancedResume.Split('\n');
+                        foreach (var line in lines)
+                        {
+                            if (string.IsNullOrWhiteSpace(line))
+                            {
+                                column.Item().PaddingVertical(3).Text("");
+                            }
+                            else if (line.Trim().All(c => c == '=' || c == '-'))
+                            {
+                                column.Item().PaddingVertical(2).LineHorizontal(0.5f);
+                            }
+                            else if (line == line.ToUpper() && line.Length < 50)
+                            {
+                                column.Item().PaddingTop(5).Text(line).Bold().FontSize(13);
+                            }
+                            else
+                            {
+                                column.Item().Text(line);
+                            }
+                        }
+                    });
+                });
+            }).GeneratePdf();
+
+            return File(pdfBytes, "application/pdf", $"ReRhythm_Enhanced_Resume_{userId}.pdf");
         }
         catch (Exception ex)
         {

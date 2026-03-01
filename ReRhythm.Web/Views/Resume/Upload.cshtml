@@ -6,12 +6,13 @@
 
   <!-- Hero Header -->
   <div class="text-center pt-16 pb-10 px-4">
-    <div class="flex justify-center">
-      <img src="~/rhythmlogo.png" alt="ReRhythm Logo" class="h-32 page-logo m-0 p-0" />
+    <div class="flex justify-center items-center gap-3 mb-4">
+      <span class="text-6xl" style="color: #38BDF8;">♪</span>
+      <h1 class="text-5xl font-extrabold"><span class="re-text">Re</span><span style="color: #38BDF8;">Rhythm</span></h1>
     </div>
-    <h1 class="text-5xl font-extrabold mb-4 leading-tight">
+    <h2 class="text-4xl font-extrabold mb-4 leading-tight">
       Catch the Industry <span class="beat-text">Beat</span>
-    </h1>
+    </h2>
   </div>
 
   <!-- Step Progress Bar -->
@@ -104,11 +105,12 @@
         <!-- Years in Target Industry Field -->
         <div class="mb-5">
           <label class="block text-sm font-medium text-slate-300 mb-2">Years in Target Industry</label>
-          <input type="number" name="yearsInTargetIndustry" min="0" max="50" required
+          <input type="number" name="yearsInTargetIndustry" id="yearsInTargetIndustry" min="0" max="50" required
                  class="w-full bg-slate-800/60 border border-slate-700 rounded-xl
                         px-4 py-3 text-white placeholder-slate-500
                         focus:outline-none focus:border-sky-500 focus:ring-1
                         focus:ring-sky-500 transition-colors" />
+          <p id="industryExpError" class="text-xs text-red-400 mt-1 hidden">Industry experience cannot exceed total experience</p>
           <p class="text-xs text-slate-500 mt-1">How many years have you worked in this specific industry?</p>
         </div>
 
@@ -312,6 +314,28 @@
   const roleSelect = document.getElementById('targetRole');
   const expInput = document.querySelector('[name="totalYearsOfExperience"]');
   const industryExpInput = document.querySelector('[name="yearsInTargetIndustry"]');
+  const industryExpError = document.getElementById('industryExpError');
+
+  // Validate industry experience
+  function validateExperience() {
+    const totalExp = parseInt(expInput.value) || 0;
+    const industryExp = parseInt(industryExpInput.value) || 0;
+    
+    if (industryExp > totalExp) {
+      industryExpError.classList.remove('hidden');
+      industryExpInput.classList.add('border-red-500');
+      industryExpInput.classList.remove('border-slate-700');
+      return false;
+    } else {
+      industryExpError.classList.add('hidden');
+      industryExpInput.classList.remove('border-red-500');
+      industryExpInput.classList.add('border-slate-700');
+      return true;
+    }
+  }
+
+  expInput.addEventListener('input', validateExperience);
+  industryExpInput.addEventListener('input', validateExperience);
 
   // Enable quiz button only when all required fields are filled
   function checkQuizAvailability() {
@@ -717,6 +741,11 @@
       const errorMsg = document.getElementById('errorMsg');
       errorMsg.textContent = 'Please enter a valid and unique User ID.';
       errorMsg.classList.remove('hidden');
+      return;
+    }
+    
+    // Validate experience
+    if (!validateExperience()) {
       return;
     }
     

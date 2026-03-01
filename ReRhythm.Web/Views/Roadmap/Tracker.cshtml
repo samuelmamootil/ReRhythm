@@ -9,8 +9,9 @@
 
   <!-- Hero Header -->
   <div class="text-center pt-10 pb-6 px-4">
-    <div class="flex justify-center">
-      <img src="~/rhythmlogo.png" alt="ReRhythm Logo" class="h-32 page-logo m-0 p-0" />
+    <div class="flex justify-center items-center gap-3">
+      <span class="text-6xl" style="color: #38BDF8;">♪</span>
+      <h1 class="text-5xl font-extrabold"><span class="re-text">Re</span><span style="color: #38BDF8;">Rhythm</span></h1>
     </div>
     <h1 class="text-4xl font-extrabold mb-2 leading-tight">
       Milestone <span class="beat-text">Tracker</span>
@@ -295,6 +296,7 @@
                 Share on LinkedIn
               </button>
               <a asp-controller="Roadmap" asp-action="DownloadEnhancedResume" asp-route-userId="@Model.UserId"
+                 onclick="showResumeLoading(event, this.href)"
                  class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white text-base bg-slate-600 hover:bg-slate-500 border border-slate-500 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
@@ -313,15 +315,31 @@
           else
           {
             <p class="text-slate-400 text-sm mb-4">
-              Complete all @ViewBag.TotalLessons lessons to unlock your enhanced resume
+              Complete all 28 lessons to unlock these features
             </p>
-            <button onclick="shakeButton()" id="lockedResumeBtn"
-                    class="locked-btn inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed relative overflow-hidden">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-              </svg>
-              Resume Locked
-            </button>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
+              <button disabled
+                 class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                </svg>
+                Download Resume
+              </button>
+              <button disabled
+                 class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+                Share Badges
+              </button>
+              <button disabled
+                 class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                Find Jobs (Premium)
+              </button>
+            </div>
             <p class="text-xs text-slate-500 mt-3">@(ViewBag.TotalLessons - ViewBag.CompletedCount) lessons remaining</p>
           }
         </div>
@@ -369,12 +387,11 @@
           // Show styled notification modal
           showNotification();
           
-          // Then open LinkedIn with pre-filled message
+          // Then open LinkedIn sharing page
           setTimeout(() => {
             const text = `Excited to share that I've completed the 28-day ReRhythm career development program!\n\nTarget Role: ${targetRole}\nIndustry: ${industry}\nSkills Acquired: ${skills}\n\n28 lessons completed\nPortfolio projects built\nAWS-powered learning\n\nCertificate attached - Verify at: https://rerhythm.com/Roadmap/Verify/${userId}\n\n#CareerDevelopment #AWS #ProfessionalGrowth #ReRhythm #${targetRole.replace(/\s+/g, '')}`;
             
-            const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`;
-            window.open(linkedInUrl, '_blank', 'width=600,height=700');
+            window.open('https://www.linkedin.com/sharing/share-offsite/', '_blank', 'width=600,height=700');
           }, 500);
         }
 
@@ -419,6 +436,36 @@
           
           // Auto-close after 10 seconds
           setTimeout(() => modal.remove(), 10000);
+        }
+        
+        function showResumeLoading(event, url) {
+          event.preventDefault();
+          
+          const modal = document.createElement('div');
+          modal.innerHTML = `
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+              <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-sky-500 rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-slideUp">
+                <div class="text-center">
+                  <div class="w-16 h-16 bg-sky-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="animate-spin w-8 h-8 text-sky-400" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <h3 class="text-2xl font-bold text-white mb-3">Generating Your Resume</h3>
+                  <p class="text-slate-300 mb-4 leading-relaxed">AI is crafting your personalized resume with all your achievements...</p>
+                  <p class="text-sm text-slate-400">This may take 10-15 seconds</p>
+                </div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+          
+          // Trigger download
+          window.location.href = url;
+          
+          // Remove modal after 15 seconds
+          setTimeout(() => modal.remove(), 15000);
         }
       </script>
       

@@ -1,0 +1,234 @@
+@{
+    ViewData["Title"] = "Role Simulator";
+    var userId = ViewBag.UserId;
+    var targetRole = ViewBag.TargetRole;
+    var tier = ViewBag.SubscriptionTier;
+}
+
+<div class="hero-bg min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-16">
+    
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-extrabold mb-4">
+        Real-World <span class="beat-text">Role Simulator</span>
+      </h1>
+      <p class="text-slate-400 text-lg">Practice real scenarios for @targetRole</p>
+    </div>
+
+    @if (tier != "Gold")
+    {
+      <div class="glass-card rounded-2xl p-8 text-center mb-8 border-2 border-yellow-500/30">
+        <div class="text-6xl mb-4">🔒</div>
+        <h2 class="text-2xl font-bold text-white mb-4">Premium Feature</h2>
+        <p class="text-slate-400 mb-6">Upgrade to Premium to access Real-World Role Simulator</p>
+        <a href="@Url.Action("Upgrade", "Premium")" class="glow-btn px-8 py-3 rounded-xl font-semibold inline-block">
+          Upgrade to Premium - $16.99/mo
+        </a>
+      </div>
+    }
+    else
+    {
+      <!-- Scenario Types -->
+      <div class="grid md:grid-cols-3 gap-4 mb-8">
+        <button onclick="generateScenario('Technical Interview')" class="glass-card rounded-xl p-6 hover:border-sky-500 transition-all">
+          <div class="text-4xl mb-3">💻</div>
+          <h3 class="text-lg font-bold text-white mb-2">Technical Interview</h3>
+          <p class="text-sm text-slate-400">Coding & system design questions</p>
+        </button>
+
+        <button onclick="generateScenario('Production Incident')" class="glass-card rounded-xl p-6 hover:border-sky-500 transition-all">
+          <div class="text-4xl mb-3">🚨</div>
+          <h3 class="text-lg font-bold text-white mb-2">Production Incident</h3>
+          <p class="text-sm text-slate-400">Handle critical system failures</p>
+        </button>
+
+        <button onclick="generateScenario('Architecture Review')" class="glass-card rounded-xl p-6 hover:border-sky-500 transition-all">
+          <div class="text-4xl mb-3">🏗️</div>
+          <h3 class="text-lg font-bold text-white mb-2">Architecture Review</h3>
+          <p class="text-sm text-slate-400">Design scalable solutions</p>
+        </button>
+
+        <button onclick="generateScenario('Code Review')" class="glass-card rounded-xl p-6 hover:border-sky-500 transition-all">
+          <div class="text-4xl mb-3">📝</div>
+          <h3 class="text-lg font-bold text-white mb-2">Code Review</h3>
+          <p class="text-sm text-slate-400">Review & improve code quality</p>
+        </button>
+
+        <button onclick="generateScenario('Team Conflict')" class="glass-card rounded-xl p-6 hover:border-sky-500 transition-all">
+          <div class="text-4xl mb-3">👥</div>
+          <h3 class="text-lg font-bold text-white mb-2">Team Conflict</h3>
+          <p class="text-sm text-slate-400">Navigate team dynamics</p>
+        </button>
+
+        <button onclick="generateScenario('Client Meeting')" class="glass-card rounded-xl p-6 hover:border-sky-500 transition-all">
+          <div class="text-4xl mb-3">🤝</div>
+          <h3 class="text-lg font-bold text-white mb-2">Client Meeting</h3>
+          <p class="text-sm text-slate-400">Present technical solutions</p>
+        </button>
+      </div>
+
+      <!-- Scenario Display -->
+      <div id="scenarioContainer" class="hidden">
+        <div class="glass-card rounded-2xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 id="scenarioTitle" class="text-2xl font-bold text-white"></h2>
+            <button onclick="clearScenario()" class="text-slate-400 hover:text-white">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          
+          <div id="scenarioContent" class="mb-6"></div>
+          
+          <div id="optionsContainer" class="space-y-3 mb-6"></div>
+          
+          <div id="feedbackContainer" class="hidden">
+            <div id="feedbackContent" class="p-6 rounded-xl mb-4"></div>
+            <button onclick="clearScenario()" class="glow-btn w-full py-3 rounded-xl font-semibold">
+              Try Another Scenario
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="hidden glass-card rounded-2xl p-8 text-center">
+        <div class="animate-spin w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p class="text-slate-400">Generating realistic scenario...</p>
+      </div>
+    }
+
+  </div>
+</div>
+
+<script>
+  const userId = '@userId';
+  let currentScenario = null;
+
+  async function generateScenario(scenarioType) {
+    document.getElementById('scenarioContainer').classList.add('hidden');
+    document.getElementById('loadingState').classList.remove('hidden');
+
+    const response = await fetch('@Url.Action("GenerateScenario")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ userId, scenarioType })
+    });
+
+    const result = await response.json();
+    
+    document.getElementById('loadingState').classList.add('hidden');
+    
+    if (result.success) {
+      currentScenario = parseScenario(result.scenario);
+      displayScenario(scenarioType, currentScenario);
+    } else {
+      alert(result.error);
+    }
+  }
+
+  function parseScenario(text) {
+    const lines = text.split('\n');
+    let scenario = { situation: '', challenge: '', options: [], correct: '', explanation: '' };
+    let section = '';
+    
+    for (let line of lines) {
+      if (line.includes('**Scenario:**')) section = 'situation';
+      else if (line.includes('**Challenge:**')) section = 'challenge';
+      else if (line.includes('**Options:**')) section = 'options';
+      else if (line.includes('**Correct Answer:**')) section = 'correct';
+      else if (line.includes('**Explanation:**')) section = 'explanation';
+      else if (line.trim()) {
+        if (section === 'situation') scenario.situation += line + '\n';
+        else if (section === 'challenge') scenario.challenge += line + '\n';
+        else if (section === 'options' && /^[A-D]\)/.test(line.trim())) {
+          scenario.options.push(line.trim());
+        }
+        else if (section === 'correct') scenario.correct = line.trim().charAt(0);
+        else if (section === 'explanation') scenario.explanation += line + '\n';
+      }
+    }
+    
+    return scenario;
+  }
+
+  function displayScenario(title, scenario) {
+    document.getElementById('scenarioTitle').textContent = title;
+    
+    document.getElementById('scenarioContent').innerHTML = `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-sky-400 mb-2">Scenario:</h3>
+        <p class="text-slate-300">${scenario.situation.trim()}</p>
+      </div>
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold text-sky-400 mb-2">Challenge:</h3>
+        <p class="text-slate-300">${scenario.challenge.trim()}</p>
+      </div>
+      <h3 class="text-lg font-semibold text-sky-400 mb-3">What would you do?</h3>
+    `;
+    
+    const optionsHtml = scenario.options.map(opt => {
+      const letter = opt.charAt(0);
+      return `
+        <button onclick="selectOption('${letter}')" 
+                class="option-btn w-full text-left p-4 rounded-xl bg-slate-800/60 border-2 border-slate-700 hover:border-sky-500 transition-all text-slate-300">
+          ${opt}
+        </button>
+      `;
+    }).join('');
+    
+    document.getElementById('optionsContainer').innerHTML = optionsHtml;
+    document.getElementById('feedbackContainer').classList.add('hidden');
+    document.getElementById('scenarioContainer').classList.remove('hidden');
+    document.getElementById('scenarioContainer').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function selectOption(selected) {
+    const correct = currentScenario.correct;
+    const isCorrect = selected === correct;
+    
+    // Disable all buttons
+    document.querySelectorAll('.option-btn').forEach(btn => {
+      btn.disabled = true;
+      btn.classList.remove('hover:border-sky-500');
+      const letter = btn.textContent.trim().charAt(0);
+      
+      if (letter === correct) {
+        btn.classList.add('border-emerald-500', 'bg-emerald-500/20');
+      } else if (letter === selected) {
+        btn.classList.add('border-red-500', 'bg-red-500/20');
+      } else {
+        btn.classList.add('opacity-50');
+      }
+    });
+    
+    // Show feedback
+    const feedbackHtml = `
+      <div class="${isCorrect ? 'bg-emerald-500/20 border-emerald-500' : 'bg-red-500/20 border-red-500'} border-2 rounded-xl p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="text-3xl">${isCorrect ? '✅' : '❌'}</div>
+          <h3 class="text-xl font-bold ${isCorrect ? 'text-emerald-400' : 'text-red-400'}">
+            ${isCorrect ? 'Correct!' : 'Not Quite'}
+          </h3>
+        </div>
+        <p class="text-slate-300 mb-3">
+          ${isCorrect ? 'Great choice!' : `The best answer was option ${correct}.`}
+        </p>
+        <div class="bg-slate-800/60 rounded-lg p-4">
+          <h4 class="text-sm font-semibold text-sky-400 mb-2">Explanation:</h4>
+          <p class="text-sm text-slate-300">${currentScenario.explanation.trim()}</p>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('feedbackContent').innerHTML = feedbackHtml;
+    document.getElementById('feedbackContainer').classList.remove('hidden');
+    document.getElementById('feedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function clearScenario() {
+    document.getElementById('scenarioContainer').classList.add('hidden');
+    currentScenario = null;
+  }
+</script>

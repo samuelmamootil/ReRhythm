@@ -46,7 +46,7 @@ public class CertificateService
                         .Text("This certifies that").FontSize(12).FontColor("#475569");
 
                     column.Item().PaddingTop(5).AlignCenter()
-                        .Text(plan.UserId.Replace("-", " ").ToUpper())
+                        .Text(plan.FullName?.Split('\n')[0]?.Trim() ?? plan.UserId.Replace("-", " ").ToUpper())
                         .FontSize(22).Bold().FontColor("#0f172a");
 
                     column.Item().AlignCenter().PaddingHorizontal(70).PaddingTop(12)

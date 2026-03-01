@@ -56,6 +56,16 @@ public class TextractService
         {
             _logger.LogInformation("Processing DOCX file directly");
             var text = ExtractTextFromDocx(fileBytes);
+            
+            _logger.LogInformation(
+                "DOCX parsed {CharCount} chars, {LineCount} lines",
+                text.Length, text.Split('\n').Length);
+            
+            if (text.Length < 100)
+            {
+                _logger.LogWarning("Resume text too short ({Length} chars), may be parsing error", text.Length);
+            }
+            
             var (name, contact) = ExtractNameAndContact(text);
             return (text, name, contact);
         }
@@ -91,11 +101,17 @@ public class TextractService
             var response = await _textract.DetectDocumentTextAsync(detectRequest, ct);
 
             var resumeText = ExtractTextFromBlocks(response.Blocks);
-            var (fullName, contactInfo) = ExtractNameAndContact(resumeText);
-
+            
             _logger.LogInformation(
-                "Textract parsed {CharCount} chars from resume for user {UserId}",
-                resumeText.Length, userId);
+                "Textract parsed {CharCount} chars, {LineCount} lines for user {UserId}",
+                resumeText.Length, resumeText.Split('\n').Length, userId);
+            
+            if (resumeText.Length < 100)
+            {
+                _logger.LogWarning("Resume text too short ({Length} chars), may be parsing error", resumeText.Length);
+            }
+            
+            var (fullName, contactInfo) = ExtractNameAndContact(resumeText);
 
             return (resumeText, fullName, contactInfo);
         }
@@ -103,6 +119,16 @@ public class TextractService
         {
             _logger.LogWarning(ex, "Textract failed, falling back to PdfPig");
             var text = ExtractTextWithPdfPig(fileBytes);
+            
+            _logger.LogInformation(
+                "PdfPig parsed {CharCount} chars, {LineCount} lines",
+                text.Length, text.Split('\n').Length);
+            
+            if (text.Length < 100)
+            {
+                _logger.LogWarning("Resume text too short ({Length} chars), may be parsing error", text.Length);
+            }
+            
             var (name, contact) = ExtractNameAndContact(text);
             return (text, name, contact);
         }
@@ -114,22 +140,75 @@ public class TextractService
         var fullName = "";
         var contactParts = new List<string>();
 
-        // Extract name (usually first non-empty line)
-        if (lines.Length > 0)
-            fullName = lines[0];
-
-        // Extract contact info (email, phone, location)
-        foreach (var line in lines.Take(10))
+        _logger.LogInformation("Extracting name from {LineCount} lines", lines.Length);
+        for (int i = 0; i < Math.Min(10, lines.Length); i++)
         {
-            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"))
-                contactParts.Add(line);
-            else if (System.Text.RegularExpressions.Regex.IsMatch(line, @"\+?\d[\d\s\-\(\)]{7,}"))
-                contactParts.Add(line);
-            else if (line.Contains(",") && (line.Contains("USA") || line.Contains("United States") || System.Text.RegularExpressions.Regex.IsMatch(line, @"\b[A-Z]{2}\b")))
-                contactParts.Add(line);
+            _logger.LogInformation("Line {Index}: '{Line}'", i, lines[i]);
         }
 
-        return (fullName, string.Join(" | ", contactParts));
+        // Extract name
+        foreach (var line in lines.Take(10))
+        {
+            if (line.Length < 2 || line.Length > 50) continue;
+            if (line.Contains('@') || line.Contains("http", StringComparison.OrdinalIgnoreCase) || line.Contains("www.", StringComparison.OrdinalIgnoreCase)) continue;
+            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"\d{3,}")) continue;
+            
+            var keywords = new[] { "RESUME", "CV", "CURRICULUM", "SUMMARY", "EXPERIENCE", "EDUCATION", "SKILLS", "OBJECTIVE", "PROFILE", "PROFESSIONAL" };
+            if (keywords.Any(k => line.ToUpper().Contains(k))) continue;
+            if (line.Contains('|') || line.Contains('/') || line.Contains('\\')) continue;
+            
+            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"^[A-Za-z][A-Za-z\s\.'-]+$"))
+            {
+                fullName = line;
+                _logger.LogInformation("Found name: '{Name}'", fullName);
+                break;
+            }
+        }
+        
+        // Fallback: if no name found, default to "User" - never return resume content
+        if (string.IsNullOrEmpty(fullName))
+        {
+            fullName = "User";
+            _logger.LogWarning("No valid name found, defaulting to: '{Name}'", fullName);
+        }
+
+        // Extract contact info (email, phone, location, LinkedIn)
+        foreach (var line in lines.Take(15))
+        {
+            // Email
+            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"))
+            {
+                var email = System.Text.RegularExpressions.Regex.Match(line, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}").Value;
+                if (!contactParts.Contains(email))
+                    contactParts.Add(email);
+                continue;
+            }
+            // Phone
+            if (System.Text.RegularExpressions.Regex.IsMatch(line, @"\+?\d[\d\s\-\(\)]{7,}"))
+            {
+                var phone = System.Text.RegularExpressions.Regex.Match(line, @"\+?\d[\d\s\-\(\)]{7,}").Value.Trim();
+                if (!contactParts.Contains(phone))
+                    contactParts.Add(phone);
+                continue;
+            }
+            // LinkedIn
+            if (line.Contains("linkedin.com"))
+            {
+                if (!contactParts.Contains(line))
+                    contactParts.Add(line);
+                continue;
+            }
+            // Location (city, state) - only if short and has comma
+            if (line.Contains(",") && line.Length < 50 && line.Length > 5 && 
+                !line.Contains(":") && !line.ToUpper().Contains("EXPERIENCE") && !line.ToUpper().Contains("EDUCATION"))
+            {
+                if (!contactParts.Contains(line))
+                    contactParts.Add(line);
+            }
+        }
+
+        _logger.LogInformation("Final name: '{Name}', Contact parts: {Count}", fullName, contactParts.Count);
+        return (fullName, string.Join("  •  ", contactParts.Take(4)));
     }
 
     private string ExtractTextFromDocx(byte[] docxBytes)
@@ -139,7 +218,9 @@ public class TextractService
         var body = doc.MainDocumentPart?.Document?.Body;
         if (body == null) return string.Empty;
         
-        return body.InnerText;
+        var paragraphs = body.Descendants<Paragraph>();
+        var lines = paragraphs.Select(p => p.InnerText.Trim()).Where(t => !string.IsNullOrWhiteSpace(t));
+        return string.Join("\n", lines);
     }
 
     private string ExtractTextWithPdfPig(byte[] pdfBytes)

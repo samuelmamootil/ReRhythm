@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>@ViewData["Title"] - ReRhythm</title>
-  <link rel="icon" type="image/png" href="~/rhythmlogo.png" />
+  <link rel="icon" type="image/svg+xml" href="~/rhythmlogo.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="~/css/site.css" />
   <style>
@@ -47,6 +47,20 @@
     }
     .beat-text { color: #38bdf8; }
     body.light-mode .beat-text { color: #0ea5e9; }
+    .re-text { color: white; }
+    body.light-mode .re-text { color: black; }
+    
+    /* Button theme adjustments */
+    body.light-mode .bg-slate-600 { background-color: #475569 !important; }
+    body.light-mode .bg-slate-700 { background-color: #334155 !important; }
+    body.light-mode .hover\:bg-slate-500:hover { background-color: #64748b !important; }
+    body.light-mode .hover\:bg-slate-600:hover { background-color: #475569 !important; }
+    body.light-mode .bg-sky-500 { background-color: #0ea5e9 !important; }
+    body.light-mode .hover\:bg-sky-600:hover { background-color: #0284c7 !important; }
+    body.light-mode .bg-emerald-600 { background-color: #059669 !important; }
+    body.light-mode .hover\:bg-emerald-500:hover { background-color: #10b981 !important; }
+    body.light-mode .border-slate-500 { border-color: #64748b !important; }
+    body.light-mode .border-emerald-500 { border-color: #10b981 !important; }
     .glass-card {
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(12px);
@@ -88,11 +102,19 @@
   <nav class="border-b border-slate-800 px-8 py-3 flex items-center justify-between
               sticky top-0 z-50"
        style="background: rgba(10,14,26,0.95); backdrop-filter: blur(10px);">
-    <a asp-controller="Resume" asp-action="Upload" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-      <img id="navLogo" src="~/rhythmlogo.png" alt="ReRhythm" class="h-20 m-0 p-0" />
-     <!-- Navbar   <span class="text-xl font-bold gradient-text">ReRhythm</span>-->
+    <a asp-controller="Resume" asp-action="Upload" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+      <span class="text-2xl" style="color: #38BDF8;">♪</span>
+      <span class="text-xl font-bold"><span class="re-text">Re</span><span style="color: #38BDF8;">Rhythm</span></span>
     </a>
     <div class="flex items-center gap-6 text-sm">
+      @if (ViewBag.SubscriptionTier == "Gold")
+      {
+        <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">⭐ GOLD</span>
+      }
+      else if (ViewBag.SubscriptionTier != null)
+      {
+        <a href="/Premium/Upgrade" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600; text-decoration: none;">⭐ Upgrade to Gold</a>
+      }
       <button id="themeToggle" class="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800" title="Toggle theme">
         <svg id="darkIcon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
@@ -102,8 +124,12 @@
         </svg>
       </button>
       <a href="/Home/Education" class="text-slate-400 hover:text-white transition-colors">Education</a>
-      <a href="/Roadmap/FindUser" class="text-slate-400 hover:text-white transition-colors">Track Milestones</a>
-      <a id="forumLink" href="#" class="text-slate-400 hover:text-white transition-colors">Forum</a>
+      @if (ViewBag.SubscriptionTier == "Gold")
+      {
+        <a id="simulatorLink" href="/Simulator/Index" class="text-slate-400 hover:text-white transition-colors">Simulator</a>
+      }
+      <a id="trackMilestonesLink" href="/Roadmap/FindUser" class="text-slate-400 hover:text-white transition-colors">Track Milestones</a>
+      <a id="forumLink" href="/Forum/Index" class="text-slate-400 hover:text-white transition-colors">Forum</a>
       <span class="text-xs bg-slate-800 border border-slate-700 text-slate-300
                    px-3 py-1 rounded-full">
         Powered by AWS Bedrock
@@ -119,29 +145,13 @@
     const navLogo = document.getElementById('navLogo');
     const savedTheme = localStorage.getItem('theme') || 'dark';
     
-    function updateLogo(isLight) {
-      if (navLogo) {
-        navLogo.src = isLight ? '/rhythmlogo_light.png' : '/rhythmlogo.png';
-      }
-      // Update all page logos
-      const pageLogos = document.querySelectorAll('.page-logo');
-      pageLogos.forEach(logo => {
-        logo.src = isLight ? '/rhythmlogo_light.png' : '/rhythmlogo.png';
-      });
-    }
+    // SVG logo works for both themes, no need to update
     
     if (savedTheme === 'light') {
       document.body.classList.add('light-mode');
       darkIcon.classList.add('hidden');
       lightIcon.classList.remove('hidden');
-      updateLogo(true);
     }
-    
-    // Update logos on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      const isLight = document.body.classList.contains('light-mode');
-      updateLogo(isLight);
-    });
     
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('light-mode');
@@ -149,20 +159,16 @@
       localStorage.setItem('theme', isLight ? 'light' : 'dark');
       darkIcon.classList.toggle('hidden');
       lightIcon.classList.toggle('hidden');
-      updateLogo(isLight);
     });
 
-    // Update Track Milestones link if userId exists
+    // Update navigation links if userId exists
     const urlParams = new URLSearchParams(window.location.search);
     const currentUserId = urlParams.get('userId');
     if (currentUserId) {
       localStorage.setItem('reRhythmLastUserId', currentUserId);
       document.getElementById('forumLink').href = `/Forum/Index?userId=${currentUserId}`;
-    } else {
-      const lastUserId = localStorage.getItem('reRhythmLastUserId');
-      if (lastUserId) {
-        document.getElementById('forumLink').href = `/Forum/Index?userId=${lastUserId}`;
-      }
+      document.getElementById('simulatorLink').href = `/Simulator/Index?userId=${currentUserId}`;
+      document.getElementById('trackMilestonesLink').style.display = 'none';
     }
   </script>
 
