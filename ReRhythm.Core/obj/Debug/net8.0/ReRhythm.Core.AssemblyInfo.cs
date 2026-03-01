@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ReRhythm.Core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c254f463b5db5d008bf549c1146630080033d38a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bf380fb1d2f4d1e8d9e3607d20dde79d878e7d1e")]
 [assembly: System.Reflection.AssemblyProductAttribute("ReRhythm.Core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ReRhythm.Core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
