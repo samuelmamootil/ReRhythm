@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ReRhythm.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bf380fb1d2f4d1e8d9e3607d20dde79d878e7d1e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+464d3120670ad9e12b6dda69b8301027c921cd27")]
 [assembly: System.Reflection.AssemblyProductAttribute("ReRhythm.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ReRhythm.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
