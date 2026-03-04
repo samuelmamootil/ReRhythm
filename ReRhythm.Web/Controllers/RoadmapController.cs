@@ -9,17 +9,20 @@ public partial class RoadmapController : Controller
     private readonly RoadmapService _roadmapService;
     private readonly DynamoDbService _dynamoDb;
     private readonly BadgeService _badgeService;
+    private readonly AnalyticsService _analytics;
     private readonly ILogger<RoadmapController> _logger;
 
     public RoadmapController(
         RoadmapService roadmapService,
         DynamoDbService dynamoDb,
         BadgeService badgeService,
+        AnalyticsService analytics,
         ILogger<RoadmapController> logger)
     {
         _roadmapService = roadmapService;
         _dynamoDb = dynamoDb;
         _badgeService = badgeService;
+        _analytics = analytics;
         _logger = logger;
     }
 
@@ -40,7 +43,7 @@ public partial class RoadmapController : Controller
         {
             var additionalSkills = customSkills.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Take(5)
-                .Where(s => !plan.SkillsToAcquire.Contains(s))
+                .Where(s => !(plan.SkillsToAcquire?.Contains(s) ?? false))
                 .ToList();
             
             if (additionalSkills.Any())
@@ -50,13 +53,13 @@ public partial class RoadmapController : Controller
                     userId, plan.OriginalResumeText, plan.TargetRole, plan.Industry,
                     plan.TotalYearsOfExperience, plan.YearsInTargetIndustry,
                     plan.FullName, plan.ContactInfo, plan.PersonalityType,
-                    string.Join(", ", additionalSkills), ct);
+                    plan.ParsedResumeData, string.Join(", ", additionalSkills), ct);
             }
         }
 
         var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
         var completedCount = allLessons.Count(l => l.IsCompleted);
-        var totalLessons = plan.Modules.Sum(m => m.DailySprints.Count);
+        var totalLessons = plan.Modules?.Sum(m => m.DailySprints?.Count ?? 0) ?? 0;
         
         // Get badge count
         int badgeCount = 0;
@@ -76,6 +79,18 @@ public partial class RoadmapController : Controller
         ViewBag.AllLessons = allLessons;
         ViewBag.BadgeCount = badgeCount;
         ViewBag.SubscriptionTier = plan.SubscriptionTier ?? "Basic";
+        
+        // Calculate resume score (free for all users)
+        try
+        {
+            var resumeScore = await _analytics.CalculateResumeScoreAsync(plan, ct);
+            ViewBag.ResumeScore = resumeScore;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating resume score for user {UserId}", userId);
+            ViewBag.ResumeScore = null;
+        }
 
         return View(plan);
     }
@@ -96,10 +111,11 @@ public partial class RoadmapController : Controller
         var personalityType = existingPlan?.PersonalityType;
         var fullName = existingPlan?.FullName ?? "";
         var contactInfo = existingPlan?.ContactInfo ?? "";
+        var resumeData = existingPlan?.ParsedResumeData;
 
         var plan = await _roadmapService.GenerateRoadmapAsync(
             userId, resumeText, targetRole, industry, totalYearsOfExperience, yearsInTargetIndustry,
-            fullName, contactInfo, personalityType, null, ct);
+            fullName, contactInfo, personalityType, resumeData, null, ct);
 
         return RedirectToAction("Index", new { userId });
     }
@@ -116,12 +132,7 @@ public partial class RoadmapController : Controller
         if (plan is null)
             return NotFound("Plan not found.");
         
-        // Check subscription tier
-        var tier = plan.SubscriptionTier ?? "Basic";
-        if (tier != "Gold")
-            return RedirectToAction("Upgrade", "Premium");
-        
-        var module = plan.Modules.FirstOrDefault(m => m.WeekNumber == weekNumber);
+        var module = plan.Modules?.FirstOrDefault(m => m.WeekNumber == weekNumber);
 
         if (module is null)
             return NotFound("Module not found.");
@@ -129,6 +140,7 @@ public partial class RoadmapController : Controller
         var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
         ViewBag.UserId = userId;
         ViewBag.AllLessons = allLessons;
+        ViewBag.SubscriptionTier = plan.SubscriptionTier ?? "Basic";
         return View(module);
     }
 
@@ -145,13 +157,25 @@ public partial class RoadmapController : Controller
 
         var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
         var completedCount = allLessons.Count(l => l.IsCompleted);
-        var totalLessons = plan.Modules.Sum(m => m.DailySprints.Count);
+        var totalLessons = plan.Modules?.Sum(m => m.DailySprints?.Count ?? 0) ?? 0;
 
         ViewBag.CompletedCount = completedCount;
         ViewBag.TotalLessons = totalLessons;
         ViewBag.ProgressPercent = totalLessons > 0 ? (int)((completedCount / (double)totalLessons) * 100) : 0;
         ViewBag.AllLessons = allLessons;
         ViewBag.SubscriptionTier = plan.SubscriptionTier ?? "Basic";
+        
+        // Calculate resume score (free for all users)
+        try
+        {
+            var resumeScore = await _analytics.CalculateResumeScoreAsync(plan, ct);
+            ViewBag.ResumeScore = resumeScore;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calculating resume score for user {UserId}", userId);
+            ViewBag.ResumeScore = null;
+        }
 
         return View(plan);
     }
@@ -181,19 +205,14 @@ public partial class RoadmapController : Controller
     [HttpPost]
     public async Task<IActionResult> CompleteLesson(string userId, int weekNumber, int dayNumber, CancellationToken ct)
     {
-        var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
-        var tier = plan?.SubscriptionTier ?? "Basic";
-        
-        if (tier != "Gold")
-            return Json(new { success = false, error = "Premium feature" });
-        
         var moduleId = $"week{weekNumber}-day{dayNumber}";
         _logger.LogInformation("Marking lesson complete: userId={UserId}, moduleId={ModuleId}", userId, moduleId);
         
         await _dynamoDb.MarkLessonCompleteAsync(userId, moduleId, ct);
         
+        var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
         var completedCount = await _dynamoDb.GetCompletedLessonCountAsync(userId, ct);
-        var totalLessons = plan?.Modules.Sum(m => m.DailySprints.Count) ?? 0;
+        var totalLessons = plan?.Modules?.Sum(m => m.DailySprints?.Count ?? 0) ?? 0;
         var progressPercent = totalLessons > 0 ? (int)((completedCount / (double)totalLessons) * 100) : 0;
         
         // Check and award badges
@@ -224,7 +243,7 @@ public partial class RoadmapController : Controller
 
         var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
         var completedLessons = allLessons.Where(l => l.IsCompleted).ToList();
-        var totalLessons = plan.Modules.Sum(m => m.DailySprints.Count);
+        var totalLessons = plan.Modules?.Sum(m => m.DailySprints?.Count ?? 0) ?? 0;
 
         // Check if user completed all lessons
         if (completedLessons.Count < totalLessons)
@@ -254,9 +273,15 @@ public partial class RoadmapController : Controller
         var completedLessons = allLessons.Where(l => l.IsCompleted).ToList();
 
         var resumeGenerator = HttpContext.RequestServices.GetRequiredService<ResumeGeneratorService>();
-        var pdfBytes = resumeGenerator.GenerateFutureReadyResume(plan, plan.OriginalResumeText, completedLessons);
+        var pdfBytes = resumeGenerator.GenerateFutureReadyResume(plan, plan.OriginalResumeText ?? "", completedLessons);
 
-        return File(pdfBytes, "application/pdf", $"Resume_{userId}_{DateTime.UtcNow:yyyyMMdd}.pdf");
+        var userName = plan.FullName?.Split('\n')[0]?.Trim();
+        if (string.IsNullOrWhiteSpace(userName) || userName.Length > 50)
+            userName = userId;
+        else
+            userName = userName.Replace(" ", "_");
+
+        return File(pdfBytes, "application/pdf", $"Resume_{userName}_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 
     // GET /Roadmap/Verify/{userId} - Public certificate verification
@@ -272,7 +297,7 @@ public partial class RoadmapController : Controller
 
         var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
         var completedCount = allLessons.Count(l => l.IsCompleted);
-        var totalLessons = plan.Modules.Sum(m => m.DailySprints.Count);
+        var totalLessons = plan.Modules?.Sum(m => m.DailySprints?.Count ?? 0) ?? 0;
         var completionDate = allLessons.Any(l => l.IsCompleted) ? allLessons.Where(l => l.IsCompleted).Max(l => l.CreatedAt) : (DateTime?)null;
 
         ViewBag.CompletedCount = completedCount;
@@ -281,5 +306,25 @@ public partial class RoadmapController : Controller
         ViewBag.CompletionDate = completionDate;
 
         return View(plan);
+    }
+
+    // POST /Roadmap/GenerateAdvancedTopics
+    [HttpPost]
+    public async Task<IActionResult> GenerateAdvancedTopics(string userId, string targetRole, string industry, CancellationToken ct)
+    {
+        try
+        {
+            var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
+            if (plan is null)
+                return Json(new { success = false, error = "User not found" });
+
+            var topics = await _roadmapService.GenerateAdvancedTopicsAsync(targetRole, industry, plan.SkillsToAcquire, ct);
+            return Json(new { success = true, topics });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating advanced topics for user {UserId}", userId);
+            return Json(new { success = false, error = "Failed to generate topics" });
+        }
     }
 }

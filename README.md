@@ -27,5 +27,7 @@ Built and submitted for an **AWS-judged hackathon**, earning a **Top 3 finish** 
 
 ##  Architecture
 
-![ReRhythm AWS Architecture](Assets/architecture.png)
+<p align="center">
+  <img src="Assets/rhythmlogo.svg" alt="ReRhythm Logo" width="200" />
+</p>
 

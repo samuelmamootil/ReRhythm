@@ -3,14 +3,15 @@
     ViewData["Title"] = "Milestone Tracker";
     var allLessons = ViewBag.AllLessons as List<ReRhythm.Core.Models.LessonPlan> ?? new();
     var isFullyComplete = ViewBag.ProgressPercent >= 100;
+    var resumeScore = ViewBag.ResumeScore as ReRhythm.Core.Services.ResumeQualityScore;
 }
 
 <div class="hero-bg min-h-screen px-6 py-10">
 
   <!-- Hero Header -->
   <div class="text-center pt-10 pb-6 px-4">
-    <div class="flex justify-center items-center gap-3">
-      <span class="text-6xl" style="color: #38BDF8;">♪</span>
+    <div class="flex justify-center items-center gap-1">
+      <img src="~/rhythmlogo.svg" alt="ReRhythm Logo" class="w-20 h-20" />
       <h1 class="text-5xl font-extrabold"><span class="re-text">Re</span><span style="color: #38BDF8;">Rhythm</span></h1>
     </div>
     <h1 class="text-4xl font-extrabold mb-2 leading-tight">
@@ -62,6 +63,88 @@
       </div>
     </div>
   </div>
+
+  <!-- Resume Quality Score (Free for all users) -->
+  @if (resumeScore != null)
+  {
+    <div class="max-w-6xl mx-auto mb-12">
+      <div class="glass-card rounded-2xl p-8 border border-slate-700">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+            <span class="text-3xl"></span> Your Current Strength
+          </h2>
+          <div class="text-right">
+            <div class="text-5xl font-bold text-sky-400">@resumeScore.Score<span class="text-2xl text-slate-500">/100</span></div>
+            <p class="text-xs text-slate-500 mt-1">
+              @if (resumeScore.Score >= 80) { <span class="text-emerald-400">Excellent</span> }
+              else if (resumeScore.Score >= 60) { <span class="text-sky-400">Good</span> }
+              else if (resumeScore.Score >= 40) { <span class="text-yellow-400">Fair</span> }
+              else { <span class="text-red-400">Needs Work</span> }
+            </p>
+          </div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          @if (resumeScore.Strengths.Any())
+          {
+            <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+              <h3 class="text-sm font-semibold text-emerald-400 mb-2 flex items-center gap-2">
+                <span>✅</span> Strengths
+              </h3>
+              <ul class="space-y-1">
+                @foreach (var strength in resumeScore.Strengths.Take(3))
+                {
+                  <li class="text-slate-300 text-xs flex items-start gap-2">
+                    <span class="text-emerald-400 mt-0.5">•</span>
+                    <span>@strength</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+          @if (resumeScore.Improvements.Any())
+          {
+            <div class="bg-sky-500/10 border border-sky-500/30 rounded-xl p-4">
+              <h3 class="text-sm font-semibold text-sky-400 mb-2 flex items-center gap-2">
+                <span>💡</span> Improve
+              </h3>
+              <ul class="space-y-1">
+                @foreach (var improvement in resumeScore.Improvements.Take(3))
+                {
+                  <li class="text-slate-300 text-xs flex items-start gap-2">
+                    <span class="text-sky-400 mt-0.5">•</span>
+                    <span>@improvement</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+        @if (ViewBag.SubscriptionTier == "Gold")
+        {
+          <div class="mt-4 text-center">
+            <a asp-controller="Insights" asp-action="Dashboard" asp-route-userId="@Model.UserId" 
+               class="inline-flex items-center gap-2 text-sky-400 hover:text-sky-300 text-sm font-semibold transition-colors">
+              View Full Insights Dashboard
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+        }
+        else
+        {
+          <div class="mt-4 text-center">
+            <a href="/Premium/Upgrade" class="inline-flex items-center gap-2 text-yellow-400 hover:text-yellow-300 text-sm font-semibold transition-colors">
+              ⭐ Upgrade to Gold for Full Insights Dashboard
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+        }
+      </div>
+    </div>
+  }
 
   <!-- Skills Visualization -->
   <div class="max-w-6xl mx-auto mb-12">
@@ -303,13 +386,58 @@
                 </svg>
                 Download Resume
               </a>
-              <a asp-controller="Job" asp-action="Search" asp-route-userId="@Model.UserId"
-                 class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white text-base bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-                Find Jobs
-              </a>
+            </div>
+
+            <!-- Continue Learning Section -->
+            <div class="mt-12 pt-8 border-t border-slate-700">
+              <h3 class="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-3">
+                <span class="text-3xl">🚀</span> Continue Your Journey
+              </h3>
+              
+              <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <!-- Advanced Topics -->
+                <div class="bg-gradient-to-br from-sky-500/10 to-purple-500/10 border-2 border-sky-500/30 rounded-xl p-6">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-sky-500/20 rounded-xl flex items-center justify-center text-2xl">📚</div>
+                    <h4 class="text-xl font-bold text-white">Advanced Topics</h4>
+                  </div>
+                  <p class="text-slate-300 text-sm mb-4">Build on your @Model.TargetRole skills with advanced @Model.Industry concepts</p>
+                  <div class="space-y-2 mb-4">
+                    <div class="flex items-center gap-2 text-sm text-slate-300">
+                      <span class="text-sky-400">•</span> AI-generated learning paths
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-300">
+                      <span class="text-sky-400">•</span> Personalized to your role
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-300">
+                      <span class="text-sky-400">•</span> Senior-level concepts
+                    </div>
+                  </div>
+                  <a asp-controller="Advanced" asp-action="Index" asp-route-userId="@Model.UserId" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors block text-center">
+                    Explore Advanced Path
+                  </a>
+                </div>
+
+                <!-- Community -->
+                <div class="bg-gradient-to-br from-emerald-500/10 to-sky-500/10 border-2 border-emerald-500/30 rounded-xl p-6">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center text-2xl">👥</div>
+                    <h4 class="text-xl font-bold text-white">Graduate Community</h4>
+                  </div>
+                  <p class="text-slate-300 text-sm mb-4">Connect with fellow @Model.TargetRole graduates and industry professionals</p>
+                  <div class="space-y-2 mb-4">
+                    <div class="flex items-center gap-2 text-sm text-slate-300">
+                      <span class="text-emerald-400">•</span> Network with @Model.TargetRole professionals
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-slate-300">
+                      <span class="text-emerald-400">•</span> Share projects & get feedback
+                    </div>
+                  </div>
+                  <a asp-controller="Community" asp-action="Index" asp-route-userId="@Model.UserId" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors block text-center">
+                    Join Community
+                  </a>
+                </div>
+              </div>
             </div>
           }
           else
@@ -321,23 +449,23 @@
               <button disabled
                  class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                </svg>
+                Download Certificate
+              </button>
+              <button disabled
+                 class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                Share on LinkedIn
+              </button>
+              <button disabled
+                 class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                 </svg>
                 Download Resume
-              </button>
-              <button disabled
-                 class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-                </svg>
-                Share Badges
-              </button>
-              <button disabled
-                 class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-slate-500 text-base bg-slate-800/50 border-2 border-slate-700 cursor-not-allowed">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
-                Find Jobs (Premium)
               </button>
             </div>
             <p class="text-xs text-slate-500 mt-3">@(ViewBag.TotalLessons - ViewBag.CompletedCount) lessons remaining</p>
@@ -443,8 +571,8 @@
           
           const modal = document.createElement('div');
           modal.innerHTML = `
-            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
-              <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-sky-500 rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-slideUp">
+            <div class="fixed inset-0 bg-black/60 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+              <div class="bg-white dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900 border-2 border-sky-500 rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-slideUp">
                 <div class="text-center">
                   <div class="w-16 h-16 bg-sky-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="animate-spin w-8 h-8 text-sky-400" fill="none" viewBox="0 0 24 24">
@@ -452,9 +580,9 @@
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   </div>
-                  <h3 class="text-2xl font-bold text-white mb-3">Generating Your Resume</h3>
-                  <p class="text-slate-300 mb-4 leading-relaxed">AI is crafting your personalized resume with all your achievements...</p>
-                  <p class="text-sm text-slate-400">This may take 10-15 seconds</p>
+                  <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Generating Your Resume</h3>
+                  <p class="text-gray-700 dark:text-slate-300 mb-4 leading-relaxed">AI is crafting your personalized resume with all your achievements...</p>
+                  <p class="text-sm text-gray-600 dark:text-slate-400">This may take 10-15 seconds</p>
                 </div>
               </div>
             </div>
@@ -466,6 +594,34 @@
           
           // Remove modal after 15 seconds
           setTimeout(() => modal.remove(), 15000);
+        }
+
+        function showComingSoonModal(feature) {
+          const modal = document.createElement('div');
+          modal.innerHTML = `
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn" onclick="this.remove()">
+              <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-sky-500 rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-slideUp" onclick="event.stopPropagation()">
+                <div class="text-center">
+                  <div class="text-6xl mb-4">🚀</div>
+                  <h3 class="text-2xl font-bold text-white mb-3">${feature}</h3>
+                  <p class="text-slate-300 mb-6 leading-relaxed">This feature is coming soon! We're building an amazing experience for our graduates.</p>
+                  <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-6">
+                    <p class="text-sm text-sky-400 mb-2">✨ Get notified when it launches</p>
+                    <p class="text-xs text-slate-400">We'll email you as soon as ${feature} is ready</p>
+                  </div>
+                  <button onclick="this.closest('.fixed').remove()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                    Got it!
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+        }
+
+        // Load topics when page loads if user completed
+        if (@(isFullyComplete ? "true" : "false")) {
+          // Topics are loaded on the Advanced page
         }
       </script>
       

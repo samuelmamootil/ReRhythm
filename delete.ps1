@@ -62,6 +62,14 @@ aws s3api list-object-versions --bucket $forumBucket --region $Region --output j
 $ErrorActionPreference = "Continue"
 Write-Host "Forum images bucket emptied" -ForegroundColor Green
 
+# Delete SES verified email
+Write-Host "`nRemoving SES email verification..." -ForegroundColor Yellow
+$sesEmail = "mamootilsamuel1@gmail.com"
+$ErrorActionPreference = "SilentlyContinue"
+aws ses delete-identity --identity $sesEmail --region $Region 2>&1 | Out-Null
+$ErrorActionPreference = "Continue"
+Write-Host "SES email identity removed" -ForegroundColor Green
+
 # Delete CloudFormation stack
 Write-Host "`nDeleting CloudFormation stack..." -ForegroundColor Yellow
 aws cloudformation delete-stack --stack-name "$Environment-stack" --region $Region

@@ -206,6 +206,25 @@ public class DynamoDbService
         return response.Count ?? 0;
     }
 
+    public async Task<int> GetCompletedLessonsCountAsync(string userId, CancellationToken ct = default)
+        => await GetCompletedLessonCountAsync(userId, ct);
+
+    public async Task<List<RoadmapPlan>> GetAllRoadmapsAsync(CancellationToken ct = default)
+    {
+        var response = await _dynamo.ScanAsync(new ScanRequest
+        {
+            TableName = RoadmapTable,
+            Limit = 1000
+        }, ct);
+
+        return response.Items
+            .Select(item => JsonSerializer.Deserialize<RoadmapPlan>(
+                item["roadmapJson"].S,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!)
+            .Where(p => p is not null)
+            .ToList();
+    }
+
     // ── Badge Achievement Methods ──────────────────────────────────────────────
 
     public async Task SaveBadgeAchievementAsync(BadgeAchievement badge, CancellationToken ct = default)
@@ -265,5 +284,50 @@ public class DynamoDbService
         }, ct);
 
         return response.IsItemSet;
+    }
+
+    // ── Community & Referral Methods ───────────────────────────────────────────
+
+    public async Task<int> GetTotalUsersCountAsync(CancellationToken ct = default)
+    {
+        var response = await _dynamo.ScanAsync(new ScanRequest
+        {
+            TableName = RoadmapTable,
+            Select = Select.COUNT
+        }, ct);
+        return response.Count ?? 0;
+    }
+
+    public async Task<int> GetCompletedUsersCountAsync(CancellationToken ct = default)
+    {
+        var allUsers = await GetAllRoadmapsAsync(ct);
+        var completedCount = 0;
+
+        foreach (var plan in allUsers)
+        {
+            var lessons = await GetAllLessonsForUserAsync(plan.UserId, ct);
+            var totalLessons = plan.Modules?.Sum(m => m.DailySprints?.Count ?? 0) ?? 0;
+            var completed = lessons.Count(l => l.IsCompleted);
+            if (totalLessons > 0 && completed >= totalLessons)
+                completedCount++;
+        }
+
+        return completedCount;
+    }
+
+    public async Task<int> GetReferralCountAsync(string userId, CancellationToken ct = default)
+    {
+        var response = await _dynamo.ScanAsync(new ScanRequest
+        {
+            TableName = RoadmapTable,
+            FilterExpression = "referredBy = :refId AND subscriptionTier = :tier",
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                [":refId"] = new AttributeValue { S = userId },
+                [":tier"] = new AttributeValue { S = "Gold" }
+            },
+            Select = Select.COUNT
+        }, ct);
+        return response.Count ?? 0;
     }
 }

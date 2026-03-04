@@ -30,6 +30,7 @@ public class RoadmapService
         string fullName,
         string contactInfo,
         string? personalityType,
+        ResumeData? resumeData = null,
         string? customSkills = null,
         CancellationToken ct = default)
     {
@@ -70,10 +71,9 @@ public class RoadmapService
 
         // Parse the JSON response from Bedrock
         RoadmapPlan plan;
+        var jsonText = ragResponse.GeneratedText;
         try
         {
-            var jsonText = ragResponse.GeneratedText;
-            
             // Remove markdown code fences if present
             if (jsonText.Contains("```json"))
             {
@@ -99,8 +99,9 @@ public class RoadmapService
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                 ?? throw new InvalidOperationException("Empty roadmap response");
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
+            _logger.LogError(ex, "Failed to parse roadmap JSON. Raw response: {Response}", jsonText);
             // Fallback: wrap raw text in structured plan
             plan = new RoadmapPlan
             {
@@ -114,34 +115,51 @@ public class RoadmapService
         plan.UserId = userId;
         plan.FullName = fullName;
         plan.ContactInfo = contactInfo;
+        plan.ParsedResumeData = resumeData;
+        
+        // Parse email and phone from ContactInfo
+        var emailMatch = System.Text.RegularExpressions.Regex.Match(contactInfo, @"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}");
+        plan.Email = emailMatch.Success ? emailMatch.Value : string.Empty;
+        
+        var phoneMatch = System.Text.RegularExpressions.Regex.Match(contactInfo, @"\+?[1-9]\d{0,3}[\s\-]?\(?\d{1,4}\)?[\s\-]?\d{1,4}[\s\-]?\d{1,9}");
+        plan.PhoneNumber = phoneMatch.Success ? phoneMatch.Value.Trim() : string.Empty;
+        
         plan.OriginalResumeText = resumeText;
         plan.TargetRole = targetRole;
         plan.Industry = industry;
         plan.TotalYearsOfExperience = totalYearsOfExperience;
         plan.YearsInTargetIndustry = yearsInTargetIndustry;
         plan.PersonalityType = personalityType;
-        plan.Citations = ragResponse.Citations;
+        plan.Citations = ragResponse.Citations ?? new List<CitationSource>();
+        plan.Modules = plan.Modules ?? new List<WeeklyModule>();
+        plan.SkillsIdentified = plan.SkillsIdentified ?? new List<string>();
+        plan.SkillsToAcquire = plan.SkillsToAcquire ?? new List<string>();
 
         // Persist to DynamoDB
         await _dynamoDb.SaveRoadmapAsync(plan, ct);
 
         // Create lesson records for tracking
-        foreach (var module in plan.Modules)
+        if (plan.Modules != null)
         {
-            foreach (var sprint in module.DailySprints)
+            foreach (var module in plan.Modules)
             {
-                var lesson = new LessonPlan
+                if (module.DailySprints == null) continue;
+                
+                foreach (var sprint in module.DailySprints)
                 {
-                    UserId = userId,
-                    ModuleId = $"week{module.WeekNumber}-day{sprint.Day}",
-                    WeekNumber = module.WeekNumber,
-                    DayNumber = sprint.Day,
-                    Topic = sprint.Topic,
-                    TargetRole = targetRole,
-                    IsCompleted = false,
-                    CreatedAt = DateTime.UtcNow
-                };
-                await _dynamoDb.SaveLessonPlanAsync(lesson, ct);
+                    var lesson = new LessonPlan
+                    {
+                        UserId = userId,
+                        ModuleId = $"week{module.WeekNumber}-day{sprint.Day}",
+                        WeekNumber = module.WeekNumber,
+                        DayNumber = sprint.Day,
+                        Topic = sprint.Topic,
+                        TargetRole = targetRole,
+                        IsCompleted = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _dynamoDb.SaveLessonPlanAsync(lesson, ct);
+                }
             }
         }
 
@@ -151,6 +169,38 @@ public class RoadmapService
 
         return plan;
     }
+
+    public async Task<List<string>> GenerateAdvancedTopicsAsync(
+        string targetRole,
+        string industry,
+        List<string> completedSkills,
+        CancellationToken ct = default)
+    {
+        var prompt = $@"Based on a {targetRole} in {industry} who has completed these skills: {string.Join(", ", completedSkills)}
+
+Generate exactly 4 advanced learning topics for continued growth. Topics should be:
+- Specific to {targetRole} career advancement
+- Build upon completed skills
+- Industry-relevant for {industry}
+- Focused on senior/leadership level concepts
+
+Respond with ONLY a JSON array of 4 topic strings, no other text:
+[""topic 1"", ""topic 2"", ""topic 3"", ""topic 4""]";
+
+        try
+        {
+            var response = await _ragService.GenerateSimpleResponseAsync(prompt, ct);
+            _logger.LogInformation("AI Response for advanced topics: {Response}", response);
+            
+            var topics = JsonSerializer.Deserialize<List<string>>(response.Trim());
+            return topics ?? new List<string> { "System Design Patterns", "Leadership & Mentoring", "Advanced Architecture", "Performance Optimization" };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate advanced topics for {Role} in {Industry}", targetRole, industry);
+            return new List<string> { "System Design Patterns", "Leadership & Mentoring", "Advanced Architecture", "Performance Optimization" };
+        }
+    }
 }
 
 public class RoadmapPlan
@@ -158,6 +208,8 @@ public class RoadmapPlan
     public string UserId { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string ContactInfo { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
     public string TargetRole { get; set; } = string.Empty;
     public string Industry { get; set; } = string.Empty;
     public int TotalYearsOfExperience { get; set; }
@@ -171,6 +223,9 @@ public class RoadmapPlan
     public List<string> SkillsIdentified { get; set; } = [];
     public List<string> SkillsToAcquire { get; set; } = [];
     public string SubscriptionTier { get; set; } = "Basic";
+    
+    // Store complete parsed resume data
+    public ResumeData? ParsedResumeData { get; set; }
 }
 
 public class WeeklyModule

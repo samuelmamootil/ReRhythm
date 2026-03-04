@@ -185,8 +185,8 @@
   }
 
   function selectOption(selected) {
-    const correct = currentScenario.correct;
-    const isCorrect = selected === correct;
+    const correct = currentScenario.correct.toLowerCase();
+    const isCorrect = selected.toLowerCase() === correct;
     
     // Disable all buttons
     document.querySelectorAll('.option-btn').forEach(btn => {

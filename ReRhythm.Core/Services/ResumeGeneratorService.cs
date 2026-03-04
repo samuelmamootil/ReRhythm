@@ -440,37 +440,4 @@ public class ResumeGeneratorService
     }
 }
 
-public class ParsedResumeData
-{
-    public string Name { get; set; } = string.Empty;
-    public string ContactInfo { get; set; } = string.Empty;
-    public string Summary { get; set; } = string.Empty;
-    public List<string> Skills { get; set; } = new();
-    public List<WorkExperience> WorkExperiences { get; set; } = new();
-    public List<PersonalProject> PersonalProjects { get; set; } = new();
-    public List<EducationEntry> EducationEntries { get; set; } = new();
-    public List<string> Certifications { get; set; } = new();
-}
 
-public class EducationEntry
-{
-    public string Institution { get; set; } = string.Empty;
-    public string Degree { get; set; } = string.Empty;
-    public string Duration { get; set; } = string.Empty;
-    public string GPA { get; set; } = string.Empty;
-    public string Coursework { get; set; } = string.Empty;
-}
-
-public class PersonalProject
-{
-    public string Name { get; set; } = string.Empty;
-    public List<string> Description { get; set; } = new();
-}
-
-public class WorkExperience
-{
-    public string Company { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-    public string Duration { get; set; } = string.Empty;
-    public List<string> Responsibilities { get; set; } = new();
-}

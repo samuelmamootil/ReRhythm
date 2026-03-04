@@ -1,0 +1,331 @@
+@model ReRhythm.Core.Services.RoadmapPlan
+@{
+    ViewData["Title"] = "Career Insights";
+    var industryInsights = ViewBag.IndustryInsights as ReRhythm.Core.Services.IndustryInsights;
+    var skillGap = ViewBag.SkillGap as ReRhythm.Core.Services.SkillGapAnalysis;
+    var resumeScore = ViewBag.ResumeScore as ReRhythm.Core.Services.ResumeQualityScore;
+}
+
+<div class="hero-bg min-h-screen px-4 py-10">
+  
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-4 py-2 rounded-full text-sm font-bold mb-4">
+        ⭐ GOLD EXCLUSIVE
+      </div>
+      <h1 class="text-5xl font-extrabold mb-4">
+        Career <span class="beat-text">Insights</span>
+      </h1>
+      <p class="text-slate-400 text-lg">Data-driven insights to accelerate your career growth</p>
+    </div>
+
+    <!-- Resume Quality Score -->
+    <div class="glass-card rounded-2xl p-8 mb-8 border border-slate-700">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+          <span class="text-3xl"></span> Your Current Strength
+        </h2>
+        <div class="text-right">
+          <div class="text-5xl font-bold text-sky-400">@resumeScore.Score<span class="text-2xl text-slate-500">/100</span></div>
+          <p class="text-xs text-slate-500 mt-1">
+            @if (resumeScore.Score >= 80) { <span class="text-emerald-400">Excellent</span> }
+            else if (resumeScore.Score >= 60) { <span class="text-sky-400">Good</span> }
+            else if (resumeScore.Score >= 40) { <span class="text-yellow-400">Fair</span> }
+            else { <span class="text-red-400">Needs Work</span> }
+          </p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Strengths -->
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-6">
+          <h3 class="text-lg font-semibold text-emerald-400 mb-4 flex items-center gap-2">
+            <span>✅</span> Strengths
+          </h3>
+          @if (resumeScore.Strengths.Any())
+          {
+            <ul class="space-y-2">
+              @foreach (var strength in resumeScore.Strengths)
+              {
+                <li class="text-slate-300 text-sm flex items-start gap-2">
+                  <span class="text-emerald-400 mt-0.5">•</span>
+                  <span>@strength</span>
+                </li>
+              }
+            </ul>
+          }
+          else
+          {
+            <p class="text-slate-400 text-sm">Complete more lessons to unlock strengths</p>
+          }
+        </div>
+
+        <!-- Improvements -->
+        <div class="bg-sky-500/10 border border-sky-500/30 rounded-xl p-6">
+          <h3 class="text-lg font-semibold text-sky-400 mb-4 flex items-center gap-2">
+            <span>💡</span> Areas to Improve
+          </h3>
+          @if (resumeScore.Improvements.Any())
+          {
+            <ul class="space-y-2">
+              @foreach (var improvement in resumeScore.Improvements)
+              {
+                <li class="text-slate-300 text-sm flex items-start gap-2">
+                  <span class="text-sky-400 mt-0.5">•</span>
+                  <span>@improvement</span>
+                </li>
+              }
+            </ul>
+          }
+          else
+          {
+            <p class="text-emerald-400 text-sm">🎉 Your resume looks great!</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Skill Gap Analysis -->
+    @if (skillGap != null)
+    {
+      <div class="glass-card rounded-2xl p-8 mb-8 border border-slate-700">
+        <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+          <span class="text-3xl">🎯</span> Skill Gap Analysis
+        </h2>
+        <p class="text-slate-400 text-sm mb-6">Compared to @skillGap.ComparisonCount others targeting "@ViewBag.TargetRole"</p>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Missing Skills -->
+          <div>
+            <h3 class="text-lg font-semibold text-red-400 mb-4">❌ Skills to Acquire</h3>
+            @if (skillGap.MissingSkills.Any())
+            {
+              <div class="space-y-3">
+                @foreach (var skill in skillGap.MissingSkills.Take(5))
+                {
+                  <div class="bg-slate-800/60 rounded-lg p-3">
+                    <div class="flex justify-between items-center mb-2">
+                      <span class="text-white font-medium text-sm">@skill.Skill</span>
+                      <span class="text-xs text-slate-400">@skill.Percentage% have this</span>
+                    </div>
+                    <div class="w-full bg-slate-700 rounded-full h-2">
+                      <div class="bg-red-500 h-2 rounded-full" style="width: @skill.Percentage%"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+            else
+            {
+              <p class="text-emerald-400 text-sm">✅ You have all common skills!</p>
+            }
+          </div>
+
+          <!-- Unique Skills -->
+          <div>
+            <h3 class="text-lg font-semibold text-emerald-400 mb-4">⚡ Your Unique Edge</h3>
+            @if (skillGap.UniqueSkills.Any())
+            {
+              <div class="flex flex-wrap gap-2">
+                @foreach (var skill in skillGap.UniqueSkills.Take(10))
+                {
+                  <span class="bg-emerald-500/20 text-emerald-300 text-sm px-4 py-2 rounded-full border border-emerald-500/30">@skill</span>
+                }
+              </div>
+              <p class="text-slate-400 text-xs mt-4">These skills give you a competitive advantage!</p>
+            }
+            else
+            {
+              <p class="text-slate-400 text-sm">Learn unique skills to stand out from the crowd</p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Salary Insights -->
+    @if (ViewBag.SalaryInsights != null)
+    {
+      var salary = ViewBag.SalaryInsights as ReRhythm.Core.Services.SalaryInsights;
+      <div class="glass-card rounded-2xl p-8 mb-8 border border-slate-700">
+        <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+          <span class="text-3xl">💰</span> Salary Insights
+        </h2>
+        <p class="text-slate-400 text-sm mb-6">Based on @Model.TargetRole with @Model.TotalYearsOfExperience years experience</p>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-6">
+          <div class="bg-slate-800/60 rounded-xl p-6 text-center">
+            <p class="text-slate-400 text-sm mb-2">Minimum</p>
+            <p class="text-3xl font-bold text-white">$@(salary.MinSalary.ToString("N0"))</p>
+          </div>
+          <div class="bg-emerald-500/10 border-2 border-emerald-500 rounded-xl p-6 text-center">
+            <p class="text-emerald-400 text-sm mb-2">Average</p>
+            <p class="text-4xl font-bold text-emerald-400">$@(salary.AverageSalary.ToString("N0"))</p>
+          </div>
+          <div class="bg-slate-800/60 rounded-xl p-6 text-center">
+            <p class="text-slate-400 text-sm mb-2">Maximum</p>
+            <p class="text-3xl font-bold text-white">$@(salary.MaxSalary.ToString("N0"))</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-lg font-semibold text-sky-400 mb-4">Top Paying Companies</h3>
+            <div class="space-y-2">
+              @foreach (var company in salary.TopCompanies)
+              {
+                <div class="bg-slate-800/60 rounded-lg p-3 text-white">@company</div>
+              }
+            </div>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-sky-400 mb-4">Salary by Location</h3>
+            <div class="space-y-2">
+              @foreach (var loc in salary.LocationSalaries)
+              {
+                <div class="bg-slate-800/60 rounded-lg p-3 flex justify-between items-center">
+                  <span class="text-white">@loc.Key</span>
+                  <span class="text-emerald-400 font-semibold">$@(loc.Value.ToString("N0"))</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Industry Insights -->
+    @if (industryInsights != null)
+    {
+      <div class="glass-card rounded-2xl p-8 mb-8 border border-slate-700">
+        <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+          <span class="text-3xl">📈</span> @industryInsights.Industry Insights
+        </h2>
+        <p class="text-slate-400 text-sm mb-6">Based on @industryInsights.TotalUsers users in this industry</p>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <!-- Top Skills -->
+          <div>
+            <h3 class="text-lg font-semibold text-sky-400 mb-4">Most In-Demand Skills</h3>
+            <div class="space-y-3">
+              @foreach (var skill in industryInsights.TopSkills.Take(8))
+              {
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-white text-sm">@skill.Skill</span>
+                    <span class="text-xs text-slate-400">@skill.Percentage%</span>
+                  </div>
+                  <div class="w-full bg-slate-700 rounded-full h-2">
+                    <div class="bg-sky-500 h-2 rounded-full" style="width: @skill.Percentage%"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Popular Roles -->
+          <div>
+            <h3 class="text-lg font-semibold text-sky-400 mb-4">Popular Career Paths</h3>
+            <div class="space-y-3">
+              @foreach (var role in industryInsights.PopularRoles)
+              {
+                <div class="bg-slate-800/60 rounded-lg p-4 flex justify-between items-center">
+                  <span class="text-white text-sm">@role.Role</span>
+                  <span class="text-sky-400 font-semibold">@role.Count users</span>
+                </div>
+              }
+            </div>
+            <div class="mt-6 bg-sky-500/10 border border-sky-500/30 rounded-lg p-4">
+              <p class="text-sm text-slate-300">
+                <span class="text-sky-400 font-semibold">Average Experience:</span> 
+                @industryInsights.AverageExperience.ToString("F1") years
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Coming Soon Features -->
+    <div class="grid md:grid-cols-4 gap-6">
+      <a href="/Job/Search?userId=@Model.UserId" class="glass-card rounded-xl p-6 border border-sky-500 hover:border-sky-400 transition-all">
+        <div class="text-4xl mb-3">🎯</div>
+        <h3 class="text-lg font-bold text-white mb-2">Job Matching</h3>
+        <p class="text-slate-400 text-sm mb-4">AI-powered job recommendations</p>
+        <span class="text-xs text-sky-400 font-semibold">View Jobs →</span>
+      </a>
+
+      <a href="/Roadmap/Index?userId=@Model.UserId" class="glass-card rounded-xl p-6 border border-sky-500 hover:border-sky-400 transition-all">
+        <div class="text-4xl mb-3">📝</div>
+        <h3 class="text-lg font-bold text-white mb-2">Download Resume</h3>
+        <p class="text-slate-400 text-sm mb-4">Get your enhanced PDF resume</p>
+        <span class="text-xs text-sky-400 font-semibold">Download →</span>
+      </a>
+
+      <a href="/Simulator/Index?userId=@Model.UserId" class="glass-card rounded-xl p-6 border border-sky-500 hover:border-sky-400 transition-all">
+        <div class="text-4xl mb-3">🎮</div>
+        <h3 class="text-lg font-bold text-white mb-2">Role Simulator</h3>
+        <p class="text-slate-400 text-sm mb-4">Practice real-world scenarios</p>
+        <span class="text-xs text-sky-400 font-semibold">Start Simulator →</span>
+      </a>
+
+      <button onclick="showComingSoon()" class="glass-card rounded-xl p-6 border border-slate-600 hover:border-sky-400 transition-all text-left">
+        <div class="text-4xl mb-3">👥</div>
+        <h3 class="text-lg font-bold text-white mb-2">Industry Expert</h3>
+        <p class="text-slate-400 text-sm mb-4">Connect with professionals</p>
+        <span class="text-xs text-yellow-400 font-semibold">Coming Soon</span>
+      </button>
+    </div>
+
+    <script>
+      function showComingSoon() {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white px-6 py-4 rounded-xl shadow-lg z-50 animate-slide-in';
+        notification.innerHTML = `
+          <div class="flex items-center gap-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div>
+              <p class="font-semibold">Coming Soon!</p>
+              <p class="text-sm opacity-90">Industry expert connections will be available shortly</p>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          notification.style.animation = 'slide-out 0.3s ease-out';
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
+      }
+    </script>
+
+    <style>
+      @@keyframes slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @@keyframes slide-out {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+      .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+      }
+    </style>
+
+    <!-- Back Button -->
+    <div class="text-center mt-12">
+      <a asp-controller="Roadmap" asp-action="Tracker" asp-route-userId="@Model.UserId" 
+         class="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Tracker
+      </a>
+    </div>
+
+  </div>
+</div>

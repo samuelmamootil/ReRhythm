@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "Hjt5uVFl37A=",
+  "dgSpecHash": "MYUzI9dXzWw=",
   "success": true,
   "projectFilePath": "C:\\Sam\\2026\\ReRhythm\\ReRhythm.Web\\ReRhythm.Web.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.bedrockagentruntime\\4.0.8.8\\awssdk.bedrockagentruntime.4.0.8.8.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.bedrockruntime\\4.0.9\\awssdk.bedrockruntime.4.0.9.nupkg.sha512",
+    "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.comprehend\\4.0.2.14\\awssdk.comprehend.4.0.2.14.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.core\\4.0.3.15\\awssdk.core.4.0.3.15.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.dynamodbv2\\4.0.14\\awssdk.dynamodbv2.4.0.14.nupkg.sha512",
     "C:\\Users\\mamoo\\.nuget\\packages\\awssdk.extensions.netcore.setup\\4.0.3.22\\awssdk.extensions.netcore.setup.4.0.3.22.nupkg.sha512",

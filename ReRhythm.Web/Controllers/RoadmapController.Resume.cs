@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ReRhythm.Core.Services;
+using ReRhythm.Core.Models;
 using System.Text;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -20,7 +21,7 @@ public partial class RoadmapController
 
             var allLessons = await _dynamoDb.GetAllLessonsForUserAsync(userId, ct);
             var completedCount = allLessons.Count(l => l.IsCompleted);
-            var totalLessons = plan.Modules.Sum(m => m.DailySprints.Count);
+            var totalLessons = plan.Modules?.Sum(m => m.DailySprints?.Count ?? 0) ?? 0;
 
             if (completedCount < totalLessons)
                 return BadRequest("Complete all 28 lessons to unlock enhanced resume");
@@ -31,17 +32,31 @@ public partial class RoadmapController
                 .Select(m => m.PortfolioProject!)
                 .ToList() ?? new List<string>();
 
+            // Use stored resume data or create fallback from plan data
+            var resumeData = plan.ParsedResumeData;
+            if (resumeData == null)
+            {
+                _logger.LogWarning("ParsedResumeData is null for user {UserId}, creating fallback from plan", userId);
+                resumeData = new ResumeData
+                {
+                    ParsedText = plan.OriginalResumeText ?? "No original resume",
+                    Name = plan.FullName ?? "User",
+                    Email = plan.Email ?? "",
+                    Phone = plan.PhoneNumber ?? "",
+                    YearsExperience = plan.TotalYearsOfExperience,
+                    TechnicalSkills = plan.SkillsToAcquire?.Take(10).ToList() ?? new List<string>(),
+                    ProfessionalSummary = $"Experienced professional with {plan.TotalYearsOfExperience} years in {plan.Industry}"
+                };
+            }
+
             var resumeBuilder = HttpContext.RequestServices.GetRequiredService<ResumeBuilderService>();
             var enhancedResume = await resumeBuilder.GenerateEnhancedResumeAsync(
-                plan.OriginalResumeText ?? "No original resume",
+                resumeData,
                 skillsLearned,
                 plan.TargetRole ?? "Software Engineer",
                 plan.Industry ?? "Technology",
-                plan.TotalYearsOfExperience,
                 completedProjects
             );
-
-            // AI already includes name and contact in the resume, don't prepend again
 
             var pdfBytes = Document.Create(container =>
             {
@@ -77,7 +92,13 @@ public partial class RoadmapController
                 });
             }).GeneratePdf();
 
-            return File(pdfBytes, "application/pdf", $"ReRhythm_Enhanced_Resume_{userId}.pdf");
+            var userName = plan.FullName?.Split('\n')[0]?.Trim();
+            if (string.IsNullOrWhiteSpace(userName) || userName.Length > 50)
+                userName = userId;
+            else
+                userName = userName.Replace(" ", "_");
+
+            return File(pdfBytes, "application/pdf", $"ReRhythm_Enhanced_Resume_{userName}.pdf");
         }
         catch (Exception ex)
         {

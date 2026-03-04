@@ -29,6 +29,10 @@ public class SimulatorController : Controller
         if (plan == null)
             return RedirectToAction("Upload", "Resume");
 
+        // Gold tier check
+        if (plan.SubscriptionTier != "Gold")
+            return RedirectToAction("Upgrade", "Premium");
+
         ViewBag.UserId = userId;
         ViewBag.TargetRole = plan.TargetRole;
         ViewBag.SubscriptionTier = plan.SubscriptionTier ?? "Basic";

@@ -99,22 +99,43 @@
 <body class="text-white antialiased min-h-screen">
 
   <!-- Navbar -->
-  <nav class="border-b border-slate-800 px-8 py-3 flex items-center justify-between
+  <nav class="border-b border-slate-800 px-4 sm:px-8 py-3 flex items-center justify-between
               sticky top-0 z-50"
        style="background: rgba(10,14,26,0.95); backdrop-filter: blur(10px);">
     <a asp-controller="Resume" asp-action="Upload" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-      <span class="text-2xl" style="color: #38BDF8;">♪</span>
-      <span class="text-xl font-bold"><span class="re-text">Re</span><span style="color: #38BDF8;">Rhythm</span></span>
+      <img src="~/rhythmlogo.svg" alt="ReRhythm Logo" class="w-8 h-8" />
+      <span class="text-lg sm:text-xl font-bold"><span class="re-text">Re</span><span style="color: #38BDF8;">Rhythm</span></span>
     </a>
-    <div class="flex items-center gap-6 text-sm">
+    
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn" class="md:hidden text-slate-400 hover:text-white p-2">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+    
+    <!-- Desktop Menu -->
+    <div class="hidden md:flex items-center gap-4 lg:gap-6 text-sm">
       @if (ViewBag.SubscriptionTier == "Gold")
       {
         <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">⭐ GOLD</span>
       }
       else if (ViewBag.SubscriptionTier != null)
       {
-        <a href="/Premium/Upgrade" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600; text-decoration: none;">⭐ Upgrade to Gold</a>
+        <a href="/Premium/Upgrade" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 6px 16px; border-radius: 16px; font-size: 12px; font-weight: 600; text-decoration: none;">⭐ Upgrade</a>
       }
+      
+      <!-- Community Notification Bell (only visible on Community pages) -->
+      @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Community" && ViewBag.UserId != null && !string.IsNullOrEmpty(ViewBag.UserId))
+      {
+        <button onclick="toggleNotifications()" class="relative text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <span id="navNotifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"></span>
+        </button>
+      }
+      
       <button id="themeToggle" class="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800" title="Toggle theme">
         <svg id="darkIcon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
@@ -127,48 +148,141 @@
       @if (ViewBag.SubscriptionTier == "Gold")
       {
         <a id="simulatorLink" href="/Simulator/Index" class="text-slate-400 hover:text-white transition-colors">Simulator</a>
+        <a id="insightsLink" href="/Insights/Dashboard" class="text-slate-400 hover:text-white transition-colors">Insights</a>
       }
-      <a id="trackMilestonesLink" href="/Roadmap/FindUser" class="text-slate-400 hover:text-white transition-colors">Track Milestones</a>
-      <a id="forumLink" href="/Forum/Index" class="text-slate-400 hover:text-white transition-colors">Forum</a>
-      <span class="text-xs bg-slate-800 border border-slate-700 text-slate-300
+      <a id="trackMilestonesLink" href="/Roadmap/FindUser" class="text-slate-400 hover:text-white transition-colors">Track</a>
+      <a id="communityLink" href="/Community/Index" class="text-slate-400 hover:text-white transition-colors">Community</a>
+      <span class="hidden lg:inline text-xs bg-slate-800 border border-slate-700 text-slate-300
                    px-3 py-1 rounded-full">
-        Powered by AWS Bedrock
+        AWS Bedrock
       </span>
     </div>
   </nav>
+  
+  <!-- Mobile Menu -->
+  <div id="mobileMenu" class="hidden md:hidden fixed inset-0 bg-gray-950/95 z-50">
+    <div class="flex flex-col h-full">
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <img src="~/rhythmlogo.svg" alt="ReRhythm Logo" class="w-8 h-8" />
+          <span class="text-xl font-bold"><span class="re-text">Re</span><span style="color: #38BDF8;">Rhythm</span></span>
+        </div>
+        <button id="closeMobileMenu" class="text-slate-400 hover:text-white p-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="space-y-4">
+          @if (ViewBag.SubscriptionTier == "Gold")
+          {
+            <div class="text-center py-2">
+              <span style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; padding: 8px 20px; border-radius: 16px; font-size: 14px; font-weight: 600;">⭐ GOLD MEMBER</span>
+            </div>
+          }
+          else if (ViewBag.SubscriptionTier != null)
+          {
+            <a href="/Premium/Upgrade" class="block text-center py-3 rounded-xl" style="background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-weight: 600;">
+              ⭐ Upgrade to Gold
+            </a>
+          }
+          <button id="mobileThemeToggle" class="w-full flex items-center justify-between p-4 bg-slate-800/60 rounded-xl text-white hover:bg-slate-700/60 transition-colors">
+            <span>Theme</span>
+            <svg id="mobileDarkIcon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            <svg id="mobileLightIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          </button>
+          <a href="/Home/Education" class="block p-4 bg-slate-800/60 rounded-xl text-white hover:bg-slate-700/60 transition-colors">Education</a>
+          @if (ViewBag.SubscriptionTier == "Gold")
+          {
+            <a id="mobileSimulatorLink" href="/Simulator/Index" class="block p-4 bg-slate-800/60 rounded-xl text-white hover:bg-slate-700/60 transition-colors">Simulator</a>
+            <a id="mobileInsightsLink" href="/Insights/Dashboard" class="block p-4 bg-slate-800/60 rounded-xl text-white hover:bg-slate-700/60 transition-colors">Insights</a>
+          }
+          <a id="mobileTrackLink" href="/Roadmap/FindUser" class="block p-4 bg-slate-800/60 rounded-xl text-white hover:bg-slate-700/60 transition-colors">Track Milestones</a>
+          <a id="mobileCommunityLink" href="/Community/Index" class="block p-4 bg-slate-800/60 rounded-xl text-white hover:bg-slate-700/60 transition-colors">Community</a>
+          <div class="text-center text-xs text-slate-500 pt-4">Powered by AWS Bedrock</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
+    // Mobile menu toggle
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const closeMobileMenu = document.getElementById('closeMobileMenu');
+    
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      });
+    }
+    
+    if (closeMobileMenu) {
+      closeMobileMenu.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        document.body.style.overflow = '';
+      });
+    }
+    
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
+    const mobileThemeToggle = document.getElementById('mobileThemeToggle');
     const darkIcon = document.getElementById('darkIcon');
     const lightIcon = document.getElementById('lightIcon');
-    const navLogo = document.getElementById('navLogo');
+    const mobileDarkIcon = document.getElementById('mobileDarkIcon');
+    const mobileLightIcon = document.getElementById('mobileLightIcon');
     const savedTheme = localStorage.getItem('theme') || 'dark';
     
-    // SVG logo works for both themes, no need to update
+    function updateThemeIcons(isLight) {
+      if (darkIcon) darkIcon.classList.toggle('hidden', isLight);
+      if (lightIcon) lightIcon.classList.toggle('hidden', !isLight);
+      if (mobileDarkIcon) mobileDarkIcon.classList.toggle('hidden', isLight);
+      if (mobileLightIcon) mobileLightIcon.classList.toggle('hidden', !isLight);
+    }
     
     if (savedTheme === 'light') {
       document.body.classList.add('light-mode');
-      darkIcon.classList.add('hidden');
-      lightIcon.classList.remove('hidden');
+      updateThemeIcons(true);
     }
     
-    themeToggle.addEventListener('click', () => {
+    function toggleTheme() {
       document.body.classList.toggle('light-mode');
       const isLight = document.body.classList.contains('light-mode');
       localStorage.setItem('theme', isLight ? 'light' : 'dark');
-      darkIcon.classList.toggle('hidden');
-      lightIcon.classList.toggle('hidden');
-    });
+      updateThemeIcons(isLight);
+    }
+    
+    if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+    if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', toggleTheme);
 
     // Update navigation links if userId exists
     const urlParams = new URLSearchParams(window.location.search);
     const currentUserId = urlParams.get('userId');
     if (currentUserId) {
       localStorage.setItem('reRhythmLastUserId', currentUserId);
-      document.getElementById('forumLink').href = `/Forum/Index?userId=${currentUserId}`;
-      document.getElementById('simulatorLink').href = `/Simulator/Index?userId=${currentUserId}`;
-      document.getElementById('trackMilestonesLink').style.display = 'none';
+      const communityLink = document.getElementById('communityLink');
+      const simulatorLink = document.getElementById('simulatorLink');
+      const insightsLink = document.getElementById('insightsLink');
+      const mobileCommunityLink = document.getElementById('mobileCommunityLink');
+      const mobileSimulatorLink = document.getElementById('mobileSimulatorLink');
+      const mobileInsightsLink = document.getElementById('mobileInsightsLink');
+      const trackLink = document.getElementById('trackMilestonesLink');
+      const mobileTrackLink = document.getElementById('mobileTrackLink');
+      
+      if (communityLink) communityLink.href = `/Community/Index?userId=${currentUserId}`;
+      if (simulatorLink) simulatorLink.href = `/Simulator/Index?userId=${currentUserId}`;
+      if (insightsLink) insightsLink.href = `/Insights/Dashboard?userId=${currentUserId}`;
+      if (mobileCommunityLink) mobileCommunityLink.href = `/Community/Index?userId=${currentUserId}`;
+      if (mobileSimulatorLink) mobileSimulatorLink.href = `/Simulator/Index?userId=${currentUserId}`;
+      if (mobileInsightsLink) mobileInsightsLink.href = `/Insights/Dashboard?userId=${currentUserId}`;
+      if (trackLink) trackLink.style.display = 'none';
+      if (mobileTrackLink) mobileTrackLink.style.display = 'none';
     }
   </script>
 

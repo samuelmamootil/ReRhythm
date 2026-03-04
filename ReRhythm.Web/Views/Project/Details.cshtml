@@ -1,0 +1,184 @@
+@model ReRhythm.Core.Models.Project
+@{
+    ViewData["Title"] = Model.Title;
+    var userId = ViewBag.UserId;
+    var userName = ViewBag.UserName;
+    var reviews = (List<ReRhythm.Core.Models.ProjectReview>)ViewBag.Reviews;
+    var isOwner = ViewBag.IsOwner;
+}
+
+<div class="hero-bg min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-16">
+    
+    <div class="mb-8">
+      <a href="@Url.Action("Index", new { userId })" class="text-sky-400 hover:text-sky-300 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Showcase
+      </a>
+    </div>
+
+    <div class="glass-card rounded-xl p-8 border border-slate-700 mb-6">
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold text-white mb-2">@Model.Title</h1>
+          <p class="text-slate-400">by @Model.UserName</p>
+        </div>
+        <div class="flex items-center gap-2 bg-slate-800 rounded-lg px-4 py-2">
+          <span class="text-yellow-400 text-2xl">★</span>
+          <span class="text-white text-xl font-bold">@Model.AverageRating.ToString("F1")</span>
+          <span class="text-slate-500 text-sm">(@Model.ReviewCount reviews)</span>
+        </div>
+      </div>
+
+      @if (Model.ImageUrls.Any())
+      {
+        <div class="grid grid-cols-@(Model.ImageUrls.Count == 1 ? "1" : "2") gap-4 mb-6">
+          @foreach (var img in Model.ImageUrls)
+          {
+            <img src="@img" alt="Screenshot" class="w-full rounded-lg" />
+          }
+        </div>
+      }
+
+      <p class="text-slate-300 mb-6 leading-relaxed">@Model.Description</p>
+
+      <div class="mb-6">
+        <h3 class="text-white font-semibold mb-3">Tech Stack</h3>
+        <div class="flex flex-wrap gap-2">
+          @foreach (var tech in Model.TechStack.Split(','))
+          {
+            <span class="bg-sky-500/20 text-sky-400 px-3 py-1 rounded-lg text-sm">@tech.Trim()</span>
+          }
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        @if (!string.IsNullOrEmpty(Model.GithubUrl))
+        {
+          <a href="@Model.GithubUrl" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            GitHub
+          </a>
+        }
+        @if (!string.IsNullOrEmpty(Model.LiveUrl))
+        {
+          <a href="@Model.LiveUrl" target="_blank" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            Live Demo
+          </a>
+        }
+      </div>
+    </div>
+
+    <div class="glass-card rounded-xl p-8 border border-slate-700">
+      <h2 class="text-2xl font-bold text-white mb-6">Peer Reviews</h2>
+
+      @if (!isOwner)
+      {
+        <div class="mb-8 bg-slate-800/50 rounded-xl p-6">
+          <h3 class="text-white font-semibold mb-4">Leave a Review</h3>
+          <form id="reviewForm">
+            <div class="mb-4">
+              <label class="block text-slate-300 mb-2">Rating</label>
+              <div class="flex gap-2" id="ratingStars">
+                @for (int i = 1; i <= 5; i++)
+                {
+                  <button type="button" onclick="setRating(@i)" class="star text-3xl text-slate-600 hover:text-yellow-400 transition-colors">★</button>
+                }
+              </div>
+              <input type="hidden" id="ratingValue" value="0" />
+            </div>
+            <div class="mb-4">
+              <label class="block text-slate-300 mb-2">Comment</label>
+              <textarea id="reviewComment" rows="3" maxlength="500" required
+                        class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500"></textarea>
+            </div>
+            <button type="submit" class="glow-btn px-6 py-3 rounded-xl font-semibold">Submit Review</button>
+          </form>
+        </div>
+      }
+
+      <div class="space-y-4">
+        @foreach (var review in reviews)
+        {
+          <div class="bg-slate-800/30 rounded-xl p-4">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <p class="text-white font-semibold">@review.ReviewerName</p>
+                <p class="text-slate-500 text-xs">@review.CreatedAt.ToString("MMM dd, yyyy")</p>
+              </div>
+              <div class="flex items-center gap-1">
+                @for (int i = 1; i <= 5; i++)
+                {
+                  <span class="@(i <= review.Rating ? "text-yellow-400" : "text-slate-600")">★</span>
+                }
+              </div>
+            </div>
+            <p class="text-slate-300 text-sm">@review.Comment</p>
+          </div>
+        }
+      </div>
+
+      @if (!reviews.Any())
+      {
+        <p class="text-slate-400 text-center py-8">No reviews yet. Be the first to review!</p>
+      }
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let selectedRating = 0;
+
+  function setRating(rating) {
+    selectedRating = rating;
+    document.getElementById('ratingValue').value = rating;
+    
+    const stars = document.querySelectorAll('#ratingStars .star');
+    stars.forEach((star, index) => {
+      star.classList.toggle('text-yellow-400', index < rating);
+      star.classList.toggle('text-slate-600', index >= rating);
+    });
+  }
+
+  document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (selectedRating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    
+    const response = await fetch('@Url.Action("AddReview")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        projectId: '@Model.ProjectId',
+        reviewerId: '@userId',
+        reviewerName: '@userName',
+        rating: selectedRating,
+        comment: document.getElementById('reviewComment').value
+      })
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      location.reload();
+    } else {
+      alert(result.error);
+      btn.disabled = false;
+      btn.textContent = 'Submit Review';
+    }
+  });
+</script>

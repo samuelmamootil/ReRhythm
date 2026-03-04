@@ -66,6 +66,28 @@ public class BedrockRAGService
         return Task.FromResult(new List<RetrievedChunk>());
     }
 
+    public async Task<string> GenerateSimpleResponseAsync(string prompt, CancellationToken ct = default)
+    {
+        var requestBody = JsonSerializer.Serialize(new
+        {
+            anthropic_version = "bedrock-2023-05-31",
+            max_tokens = 500,
+            messages = new[] { new { role = "user", content = prompt } }
+        });
+
+        var response = await _bedrockRuntime.InvokeModelAsync(new InvokeModelRequest
+        {
+            ModelId = ModelId,
+            ContentType = "application/json",
+            Accept = "application/json",
+            Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(requestBody))
+        }, ct);
+
+        var responseJson = await new StreamReader(response.Body).ReadToEndAsync();
+        using var doc = JsonDocument.Parse(responseJson);
+        return doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString() ?? string.Empty;
+    }
+
     private string BuildAugmentedQuery(string userQuery, string resumeContext, string targetRole, string industry, int yearsOfExperience)
     {
         var experienceLevel = yearsOfExperience <= 2 ? "Junior" : yearsOfExperience <= 5 ? "Mid-level" : yearsOfExperience <= 10 ? "Senior" : "Leadership/Executive";

@@ -1,0 +1,11 @@
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.csproj.AssemblyReference.cache
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\rpswa.dswa.cache.json
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.GeneratedMSBuildEditorConfig.editorconfig
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.AssemblyInfoInputs.cache
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.AssemblyInfo.cs
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.csproj.CoreCompileInputs.cache
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.MvcApplicationPartsAssemblyInfo.cs
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.MvcApplicationPartsAssemblyInfo.cache
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.RazorAssemblyInfo.cache
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.RazorAssemblyInfo.cs
+c:\Sam\2026\ReRhythm\ReRhythm.Web\obj\Release\net8.0\ReRhythm.Web.sourcelink.json

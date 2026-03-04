@@ -8,6 +8,24 @@
 <div class="hero-bg min-h-screen">
   <div class="max-w-4xl mx-auto px-4 py-16">
     
+    <!-- Notifications Dropdown -->
+    @if (!string.IsNullOrEmpty(userId))
+    {
+      <div id="notifDropdown" class="hidden fixed right-4 top-32 w-96 max-h-96 overflow-y-auto glass-card rounded-xl border border-slate-700 z-50 shadow-2xl">
+        <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+          <h3 class="font-bold text-white">Notifications</h3>
+          <button onclick="toggleNotifications()" class="text-slate-400 hover:text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div id="notifList" class="divide-y divide-slate-700">
+          <p class="p-4 text-slate-400 text-sm text-center">Loading...</p>
+        </div>
+      </div>
+    }
+    
     <!-- Question -->
     <div class="glass-card rounded-2xl p-8 mb-8">
       <h1 class="text-3xl font-bold text-white mb-4">@Model.Title</h1>
@@ -165,6 +183,81 @@
 </div>
 
 <script>
+  const userId = '@userId';
+  
+  // Notification functions
+  async function loadNotifications() {
+    if (!userId) return;
+    
+    const response = await fetch(`/Forum/GetNotifications?userId=${userId}`);
+    const notifications = await response.json();
+    
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const badge = document.getElementById('navNotifBadge');
+    if (badge && unreadCount > 0) {
+      badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+      badge.classList.remove('hidden');
+    } else if (badge) {
+      badge.classList.add('hidden');
+    }
+    
+    const list = document.getElementById('notifList');
+    if (notifications.length === 0) {
+      list.innerHTML = '<p class="p-4 text-slate-400 text-sm text-center">No notifications</p>';
+      return;
+    }
+    
+    list.innerHTML = notifications.map(n => `
+      <div class="p-4 hover:bg-slate-800/50 transition-colors ${n.isRead ? 'opacity-60' : ''}" onclick="markRead('${n.notificationId}', '${n.questionId}')">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+            n.type === 'violation' ? 'bg-red-500/20 text-red-400' :
+            n.type === 'answer' ? 'bg-sky-500/20 text-sky-400' :
+            'bg-emerald-500/20 text-emerald-400'
+          }">
+            ${
+              n.type === 'violation' ? '⚠️' :
+              n.type === 'answer' ? '💬' :
+              '✓'
+            }
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-slate-300 leading-relaxed">${n.message}</p>
+            <p class="text-xs text-slate-500 mt-1">${new Date(n.createdAt).toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  async function markRead(notificationId, questionId) {
+    await fetch('/Forum/MarkNotificationRead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ notificationId })
+    });
+    
+    if (questionId && questionId !== 'null' && questionId !== '') {
+      window.location.href = `/Forum/Question?id=${questionId}&userId=${userId}`;
+    } else {
+      loadNotifications();
+    }
+  }
+  
+  function toggleNotifications() {
+    const dropdown = document.getElementById('notifDropdown');
+    dropdown.classList.toggle('hidden');
+    if (!dropdown.classList.contains('hidden')) {
+      loadNotifications();
+    }
+  }
+  
+  // Load notifications on page load
+  if (userId) {
+    loadNotifications();
+    setInterval(loadNotifications, 5000);
+  }
+  
   document.getElementById('answerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);

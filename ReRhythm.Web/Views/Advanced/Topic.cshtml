@@ -1,0 +1,221 @@
+@{
+    ViewData["Title"] = ViewBag.TopicName;
+    var userId = ViewBag.UserId;
+    var topicName = ViewBag.TopicName;
+    var targetRole = ViewBag.TargetRole;
+    var industry = ViewBag.Industry;
+}
+
+<div class="hero-bg min-h-screen px-6 py-10">
+  
+  <div class="max-w-4xl mx-auto">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <a asp-controller="Advanced" asp-action="Index" asp-route-userId="@userId"
+         class="text-slate-400 hover:text-white transition-colors">
+        ← Back to Advanced Topics
+      </a>
+    </div>
+
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-extrabold mb-4">
+        <span class="beat-text">@topicName</span>
+      </h1>
+      <p class="text-slate-400 text-lg">Advanced learning for @targetRole in @industry</p>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="glass-card rounded-2xl p-12 text-center">
+      <div class="animate-spin w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full mx-auto mb-6"></div>
+      <p class="text-slate-300 text-lg mb-2">Generating personalized content...</p>
+      <p class="text-slate-400 text-sm">AI is creating an in-depth learning path for you</p>
+    </div>
+
+    <!-- Content Container -->
+    <div id="contentContainer" class="hidden space-y-8">
+      
+      <!-- Overview -->
+      <div class="glass-card rounded-2xl p-8 border border-slate-700">
+        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="text-3xl">📖</span> Overview
+        </h2>
+        <div id="overview" class="text-slate-300 leading-relaxed"></div>
+      </div>
+
+      <!-- Learning Objectives -->
+      <div class="glass-card rounded-2xl p-8 border border-slate-700">
+        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="text-3xl">🎯</span> Learning Objectives
+        </h2>
+        <ul id="objectives" class="space-y-3"></ul>
+      </div>
+
+      <!-- Key Concepts -->
+      <div class="glass-card rounded-2xl p-8 border border-slate-700">
+        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="text-3xl">💡</span> Key Concepts
+        </h2>
+        <div id="concepts" class="space-y-6"></div>
+      </div>
+
+      <!-- Practical Exercise -->
+      <div class="glass-card rounded-2xl p-8 border border-emerald-700">
+        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="text-3xl">🛠️</span> Hands-On Exercise
+        </h2>
+        <div id="exercise" class="space-y-4"></div>
+      </div>
+
+      <!-- Resources -->
+      <div class="glass-card rounded-2xl p-8 border border-slate-700">
+        <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="text-3xl">📚</span> Recommended Resources
+        </h2>
+        <ul id="resources" class="space-y-3"></ul>
+      </div>
+
+      <!-- Next Steps -->
+      <div class="glass-card rounded-2xl p-8 border-2 border-sky-500/30 text-center">
+        <h2 class="text-2xl font-bold text-white mb-4">Ready for More?</h2>
+        <p class="text-slate-300 mb-6">Continue your advanced learning journey</p>
+        <a asp-controller="Advanced" asp-action="Index" asp-route-userId="@userId"
+           class="glow-btn px-8 py-3 rounded-xl font-semibold inline-block">
+          Explore More Topics
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const userId = '@userId';
+  const topicName = '@topicName';
+  const targetRole = '@targetRole';
+  const industry = '@industry';
+
+  async function generateContent() {
+    try {
+      const response = await fetch('/api/advanced/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, topicName, targetRole, industry })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate content');
+
+      const content = await response.json();
+      displayContent(content);
+    } catch (error) {
+      console.error('Error:', error);
+      // Fallback to static content
+      displayFallbackContent();
+    }
+  }
+
+  function displayContent(content) {
+    document.getElementById('overview').innerHTML = content.overview || '';
+    
+    const objectivesList = document.getElementById('objectives');
+    objectivesList.innerHTML = (content.objectives || []).map(obj => 
+      `<li class="flex items-start gap-3">
+        <span class="text-emerald-400 mt-1">✓</span>
+        <span class="text-slate-300">${obj}</span>
+      </li>`
+    ).join('');
+
+    const conceptsDiv = document.getElementById('concepts');
+    conceptsDiv.innerHTML = (content.concepts || []).map(concept => 
+      `<div class="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+        <h3 class="text-lg font-bold text-sky-400 mb-3">${concept.title}</h3>
+        <p class="text-slate-300 leading-relaxed">${concept.description}</p>
+      </div>`
+    ).join('');
+
+    const exerciseDiv = document.getElementById('exercise');
+    exerciseDiv.innerHTML = `
+      <div class="bg-emerald-500/10 rounded-xl p-6 border border-emerald-500/30">
+        <h3 class="text-lg font-bold text-emerald-400 mb-3">${content.exercise?.title || 'Project'}</h3>
+        <p class="text-slate-300 mb-4">${content.exercise?.description || ''}</p>
+        <div class="bg-slate-800/50 rounded-lg p-4">
+          <p class="text-sm font-semibold text-sky-400 mb-2">Steps:</p>
+          <ol class="space-y-2 text-sm text-slate-300">
+            ${(content.exercise?.steps || []).map((step, i) => 
+              `<li class="flex gap-2"><span class="text-sky-400">${i + 1}.</span> ${step}</li>`
+            ).join('')}
+          </ol>
+        </div>
+      </div>
+    `;
+
+    const resourcesList = document.getElementById('resources');
+    resourcesList.innerHTML = (content.resources || []).map(resource => 
+      `<li class="flex items-start gap-3">
+        <span class="text-sky-400 mt-1">→</span>
+        <span class="text-slate-300">${resource}</span>
+      </li>`
+    ).join('');
+
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('contentContainer').classList.remove('hidden');
+  }
+
+  function displayFallbackContent() {
+    const fallback = {
+      overview: `This advanced topic covers ${topicName} specifically tailored for ${targetRole} professionals in the ${industry} industry. You'll dive deep into expert-level concepts, best practices, and real-world applications.`,
+      objectives: [
+        `Master advanced ${topicName} concepts and techniques`,
+        `Apply ${topicName} to real-world ${targetRole} scenarios`,
+        `Understand industry best practices and patterns`,
+        `Build production-ready solutions using ${topicName}`,
+        `Optimize and scale ${topicName} implementations`
+      ],
+      concepts: [
+        {
+          title: 'Core Principles',
+          description: `Understanding the fundamental principles of ${topicName} and how they apply to ${targetRole} work in ${industry}.`
+        },
+        {
+          title: 'Advanced Patterns',
+          description: `Exploring advanced design patterns and architectural approaches for implementing ${topicName} at scale.`
+        },
+        {
+          title: 'Best Practices',
+          description: `Industry-standard best practices for ${topicName} that ${targetRole} professionals should follow.`
+        },
+        {
+          title: 'Performance Optimization',
+          description: `Techniques for optimizing ${topicName} implementations for production environments.`
+        }
+      ],
+      exercise: {
+        title: `Build a ${topicName} Project`,
+        description: `Apply your knowledge by building a real-world project that demonstrates mastery of ${topicName}.`,
+        steps: [
+          `Research and plan your ${topicName} implementation`,
+          `Set up your development environment and tools`,
+          `Implement core functionality using best practices`,
+          `Add advanced features and optimizations`,
+          `Test thoroughly and document your work`,
+          `Deploy and share your project`
+        ]
+      },
+      resources: [
+        `Official ${topicName} documentation and guides`,
+        `Industry blogs and case studies on ${topicName}`,
+        `Open-source projects demonstrating ${topicName}`,
+        `Online courses and tutorials for advanced ${topicName}`,
+        `Community forums and discussion groups`
+      ]
+    };
+
+    displayContent(fallback);
+  }
+
+  // Load content on page load
+  window.addEventListener('load', () => {
+    setTimeout(displayFallbackContent, 1500);
+  });
+</script>

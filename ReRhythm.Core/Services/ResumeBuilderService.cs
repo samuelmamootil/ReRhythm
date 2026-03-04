@@ -2,6 +2,7 @@ using Amazon.BedrockRuntime;
 using Amazon.BedrockRuntime.Model;
 using System.Text;
 using System.Text.Json;
+using ReRhythm.Core.Models;
 
 namespace ReRhythm.Core.Services;
 
@@ -17,16 +18,15 @@ public class ResumeBuilderService
     }
 
     public async Task<string> GenerateEnhancedResumeAsync(
-        string originalResumeText,
+        ResumeData originalResume,
         List<string> skillsLearned,
         string targetRole,
         string industry,
-        int yearsOfExperience,
         List<string> completedProjects)
     {
         try
         {
-            var prompt = BuildResumePrompt(originalResumeText, skillsLearned, targetRole, industry, yearsOfExperience, completedProjects);
+            var prompt = BuildResumePrompt(originalResume, skillsLearned, targetRole, industry, completedProjects);
 
             var request = new InvokeModelRequest
             {
@@ -66,27 +66,60 @@ public class ResumeBuilderService
     }
 
     private string BuildResumePrompt(
-        string originalResume,
+        ResumeData originalResume,
         List<string> skillsLearned,
         string targetRole,
         string industry,
-        int yearsOfExperience,
         List<string> completedProjects)
     {
-        var persona = DeterminePersona(yearsOfExperience, originalResume);
-        var pageLimit = yearsOfExperience <= 5 ? "1 page" : "2 pages max";
+        var persona = DeterminePersona(originalResume.YearsExperience, originalResume.ParsedText);
+        var pageLimit = originalResume.YearsExperience <= 5 ? "1 page" : "2 pages max";
+        
+        var originalInfo = $@"
+**ORIGINAL RESUME DATA:**
+Name: {originalResume.Name}
+Email: {originalResume.Email}
+Phone: {originalResume.Phone}
+LinkedIn: {originalResume.LinkedIn}
+GitHub: {originalResume.GitHub}
+Website: {originalResume.Website}
+Location: {originalResume.Location}
+
+Professional Summary:
+{originalResume.ProfessionalSummary}
+
+Technical Skills:
+{string.Join(", ", originalResume.TechnicalSkills)}
+
+Work Experience:
+{string.Join("\n", originalResume.WorkHistory.Select(w => $"{w.Role} at {w.Company} ({w.Duration})\n{string.Join("\n", w.Responsibilities.Select(r => $"  • {r}"))}"))}
+
+Education:
+{string.Join("\n", originalResume.Education.Select(e => $"{e.Degree} - {e.Institution} ({e.Duration}) {(string.IsNullOrEmpty(e.GPA) ? "" : $"GPA: {e.GPA}")}\n{(string.IsNullOrEmpty(e.Coursework) ? "" : $"Coursework: {e.Coursework}")}"))}
+
+Personal Projects:
+{string.Join("\n", originalResume.PersonalProjects.Select(p => $"{p.Name} | {p.TechStack}\n{string.Join("\n", p.Description.Select(d => $"  • {d}"))}"))}
+
+Certifications:
+{string.Join("\n", originalResume.Certifications.Select(c => $"• {c}"))}
+
+Extracurricular Activities:
+{string.Join("\n", originalResume.ExtracurricularActivities.Select(a => $"• {a}"))}
+
+Student Organizations:
+{string.Join("\n", originalResume.StudentOrganizations.Select(o => $"• {o}"))}
+";
         
         return $@"You are an expert ATS resume writer. Generate an enhanced, ATS-optimized resume based on the following:
 
-**ORIGINAL RESUME:**
-{originalResume}
+{originalInfo}
 
 **NEW SKILLS LEARNED (from 28-day ReRhythm program):**
 {string.Join(", ", skillsLearned)}
 
 **TARGET ROLE:** {targetRole}
 **INDUSTRY:** {industry}
-**YEARS OF EXPERIENCE:** {yearsOfExperience}
+**YEARS OF EXPERIENCE:** {originalResume.YearsExperience}
 **PERSONA:** {persona}
 
 **COMPLETED PROJECTS (from ReRhythm roadmap):**
@@ -95,14 +128,14 @@ public class ResumeBuilderService
 **CRITICAL REQUIREMENTS:**
 
 1. **Universal ATS Structure (MUST follow this EXACT order):**
-   1. Contact Information (Name, Phone, Email, LinkedIn, City/State)
-   2. Professional Summary (3-4 lines ONLY)
-   3. Technical Skills / Core Competencies (grouped by category)
-   4. Work Experience (reverse chronological, CAR format)
-   5. Projects (ReRhythm projects + existing projects)
+   1. Contact Information (Name, Phone, Email, LinkedIn, GitHub, Website if available, City/State)
+   2. Professional Summary (3-4 lines ONLY - update with new skills and target role)
+   3. Technical Skills / Core Competencies (grouped by category - merge original + new skills)
+   4. Work Experience (reverse chronological, CAR format - reframe with new skills)
+   5. Projects (ReRhythm projects + existing projects with tech stack)
    6. Education (degree, GPA if 3.5+, relevant coursework)
-   7. Certifications (with dates)
-   8. Optional: Honors & Awards
+   7. Certifications (with dates - include original + ReRhythm completion)
+   8. Optional: Extracurricular Activities, Student Organizations, Leadership
 
 2. **ATS Rules (NON-NEGOTIABLE):**
    - Single-column layout ONLY
@@ -117,10 +150,11 @@ public class ResumeBuilderService
 {GetPersonaGuidelines(persona)}
 
 4. **Skills Integration Strategy:**
-   - **Technical Skills Section:** Group skills by category (Cloud, Languages, DevOps, Data, etc.)
+   - **Technical Skills Section:** Merge original skills with new skills, group by category (Cloud, Languages, DevOps, Data, etc.)
    - **Work Experience:** Reframe existing bullets to include new skills where relevant
-   - **Projects Section:** Add all {completedProjects.Count} ReRhythm projects with tech stack and measurable results
+   - **Projects Section:** Add all {completedProjects.Count} ReRhythm projects PLUS keep original projects
    - **Summary:** Update to reflect new capabilities and target role
+   - **Certifications:** Include original certifications + ReRhythm program completion
 
 5. **Bullet Point Format (CAR - Context to Action to Result):**
    GOOD: Automated infrastructure provisioning using Terraform and AWS, reducing deployment time by 70 percent across 3 environments
@@ -130,47 +164,56 @@ public class ResumeBuilderService
    - Include specific technologies used
    - Quantify results (percentages, time saved, cost reduction, scale)
 
-6. **Example Resume Structures to Follow:**
-
-{GetExampleStructure(persona)}
-
-7. **Content Enhancement Rules:**
+6. **Content Enhancement Rules:**
    - Integrate new skills naturally into existing experience
    - Add ReRhythm projects with: Project Name | Tech Stack as headline
    - Use industry keywords from target role throughout
    - Keep resume to {pageLimit}
-   - Remove anything older than 10-12 years unless highly relevant
+   - Preserve ALL original contact information (email, phone, LinkedIn, GitHub, website)
+   - Preserve ALL education details (institution, degree, GPA, coursework)
+   - Preserve ALL certifications and add new ones
+   - Include extracurricular activities and student organizations if space permits
 
 **OUTPUT FORMAT:**
 Return ONLY the complete resume text in plain text format.
 Use this exact structure:
 
 [NAME]
-[Phone] [Email] [LinkedIn] [City, State]
+[Phone] | [Email] | [LinkedIn] | [GitHub] | [Website] | [City, State]
 
 SUMMARY
-[3-4 lines]
+[3-4 lines integrating original experience + new skills + target role]
 
 TECHNICAL SKILLS
-[Grouped by category]
+[Grouped by category - merge original + new]
 
 WORK EXPERIENCE
 [Company], [Title]
 [Dates]
-[CAR bullet]
+[CAR bullet with new skills integrated]
 [CAR bullet]
 
 PROJECTS
-[Project Name] | [Tech Stack]
+[ReRhythm Project Name] | [Tech Stack]
+[CAR bullet]
+
+[Original Project Name] | [Tech Stack]
 [CAR bullet]
 
 EDUCATION
 [Degree] [Major]
-[University]
-[GPA if 3.5+]
+[University] | [Dates] | [GPA if 3.5+]
+[Relevant Coursework if available]
 
 CERTIFICATIONS
-[Cert Name] [Date]
+[Original Cert Name] - [Date]
+[ReRhythm Program Completion] - [Current Date]
+
+EXTRACURRICULAR ACTIVITIES (if space permits)
+[Activity]
+
+STUDENT ORGANIZATIONS (if space permits)
+[Organization]
 
 Begin the resume now:";
     }

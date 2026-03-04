@@ -86,7 +86,6 @@ public class ForumController : Controller
         {
             _logger.LogInformation("PostQuestion - UserId: {UserId}, Title: {Title}, Content length: {Length}", 
                 userId, title, content?.Length ?? 0);
-            _logger.LogInformation("Content preview: {Content}", content?.Substring(0, Math.Min(100, content?.Length ?? 0)));
 
             var plan = await _dynamoDb.GetLatestRoadmapAsync(userId, ct);
             if (plan is null)
@@ -107,12 +106,8 @@ public class ForumController : Controller
             }
 
             var fullName = plan.FullName?.Split('\n')[0]?.Trim() ?? "Anonymous";
-            
-            // Extra safeguard: if name is too long, it's likely the entire resume
             if (fullName.Length > 50)
-            {
                 fullName = "User";
-            }
             
             var question = new ForumQuestion
             {
@@ -126,33 +121,61 @@ public class ForumController : Controller
 
             var questionId = await _forumService.PostQuestionAsync(question, ct);
             
-            // Moderate images in background
-            if (imageUrls.Any())
+            // Moderate content in background - delete if abuse detected
+            _ = Task.Run(async () =>
             {
-                _ = Task.Run(async () =>
+                try
                 {
-                    try
+                    // Run text and image moderation in parallel for speed
+                    var textTask = Task.Run(async () =>
                     {
+                        var (titleOk, titleReason) = await _forumService.ModerateTextAsync(title, CancellationToken.None);
+                        if (!titleOk) return (false, titleReason);
+                        
+                        var (contentOk, contentReason) = await _forumService.ModerateTextAsync(content, CancellationToken.None);
+                        return contentOk ? (true, string.Empty) : (false, contentReason);
+                    });
+
+                    var imageTask = Task.Run(async () =>
+                    {
+                        if (!imageUrls.Any()) return (true, string.Empty);
+                        
+                        using var httpClient = new HttpClient();
                         foreach (var imageUrl in imageUrls)
                         {
-                            using var httpClient = new HttpClient();
                             var imageStream = await httpClient.GetStreamAsync(imageUrl);
-                            var (isAppropriate, _) = await _forumService.ModerateImageAsync(imageStream, CancellationToken.None);
-                            
+                            var (isAppropriate, reason) = await _forumService.ModerateImageAsync(imageStream, CancellationToken.None);
                             if (!isAppropriate)
-                            {
-                                await _forumService.DeleteQuestionAsync(questionId, CancellationToken.None);
-                                _logger.LogWarning($"Question {questionId} deleted due to inappropriate image");
-                                break;
-                            }
+                                return (false, reason);
                         }
-                    }
-                    catch (Exception ex)
+                        return (true, string.Empty);
+                    });
+
+                    // Wait for both to complete
+                    await Task.WhenAll(textTask, imageTask);
+                    
+                    var textResult = await textTask;
+                    var imageResult = await imageTask;
+                    
+                    // Delete if either failed
+                    if (!textResult.Item1)
                     {
-                        _logger.LogError(ex, $"Error moderating images for question {questionId}");
+                        await _forumService.DeleteQuestionAsync(questionId, CancellationToken.None);
+                        await _forumService.NotifyViolationAsync(userId, "question", textResult.Item2, CancellationToken.None);
+                        _logger.LogWarning("Question {QuestionId} deleted - Text: {Reason}", questionId, textResult.Item2);
                     }
-                });
-            }
+                    else if (!imageResult.Item1)
+                    {
+                        await _forumService.DeleteQuestionAsync(questionId, CancellationToken.None);
+                        await _forumService.NotifyViolationAsync(userId, "question", imageResult.Item2, CancellationToken.None);
+                        _logger.LogWarning("Question {QuestionId} deleted - Image: {Reason}", questionId, imageResult.Item2);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error moderating question {QuestionId}", questionId);
+                }
+            });
             
             return Json(new { success = true, questionId });
         }
@@ -180,6 +203,26 @@ public class ForumController : Controller
         };
 
         var answerId = await _forumService.PostAnswerAsync(answer, ct);
+        
+        // Moderate answer in background - delete if abuse detected
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var (isOk, reason) = await _forumService.ModerateTextAsync(content, CancellationToken.None);
+                if (!isOk)
+                {
+                    await _forumService.DeleteAnswerAsync(answerId, CancellationToken.None);
+                    await _forumService.NotifyViolationAsync(userId, "answer", reason, CancellationToken.None);
+                    _logger.LogWarning("Answer {AnswerId} deleted - Moderation failed: {Reason}", answerId, reason);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error moderating answer {AnswerId}", answerId);
+            }
+        });
+        
         return Json(new { success = true, answerId });
     }
 
@@ -201,6 +244,28 @@ public class ForumController : Controller
         CancellationToken ct)
     {
         await _forumService.AcceptAnswerAsync(questionId, answerId, ct);
+        return Json(new { success = true });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetNotifications(string userId, CancellationToken ct)
+    {
+        try
+        {
+            var notifications = await _forumService.GetUserNotificationsAsync(userId, ct);
+            return Json(notifications);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting notifications for user {UserId}", userId);
+            return Json(new List<object>());
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> MarkNotificationRead(string notificationId, CancellationToken ct)
+    {
+        await _forumService.MarkNotificationReadAsync(notificationId, ct);
         return Json(new { success = true });
     }
 }

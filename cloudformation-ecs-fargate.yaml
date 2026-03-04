@@ -440,6 +440,37 @@ Resources:
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
 
+  ForumNotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvironmentName}-forum-notifications"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: NotificationId
+          AttributeType: S
+        - AttributeName: UserId
+          AttributeType: S
+        - AttributeName: CreatedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: NotificationId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UserId-CreatedAt-Index
+          KeySchema:
+            - AttributeName: UserId
+              KeyType: HASH
+            - AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
   ForumImagesBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -473,6 +504,153 @@ Resources:
             Principal: "*"
             Action: "s3:GetObject"
             Resource: !Sub "${ForumImagesBucket.Arn}/*"
+
+  ConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvironmentName}-connections"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ConnectionId
+          AttributeType: S
+        - AttributeName: FromUserId
+          AttributeType: S
+        - AttributeName: ToUserId
+          AttributeType: S
+        - AttributeName: Status
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ConnectionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: FromUserId-Status-Index
+          KeySchema:
+            - AttributeName: FromUserId
+              KeyType: HASH
+            - AttributeName: Status
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: ToUserId-Status-Index
+          KeySchema:
+            - AttributeName: ToUserId
+              KeyType: HASH
+            - AttributeName: Status
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  ProjectsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvironmentName}-projects"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ProjectId
+          AttributeType: S
+        - AttributeName: Industry
+          AttributeType: S
+        - AttributeName: UserId
+          AttributeType: S
+        - AttributeName: CreatedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ProjectId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: Industry-CreatedAt-Index
+          KeySchema:
+            - AttributeName: Industry
+              KeyType: HASH
+            - AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: UserId-CreatedAt-Index
+          KeySchema:
+            - AttributeName: UserId
+              KeyType: HASH
+            - AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  ProjectReviewsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvironmentName}-project-reviews"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: ReviewId
+          AttributeType: S
+        - AttributeName: ProjectId
+          AttributeType: S
+        - AttributeName: CreatedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ReviewId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ProjectId-CreatedAt-Index
+          KeySchema:
+            - AttributeName: ProjectId
+              KeyType: HASH
+            - AttributeName: CreatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  ProjectImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${EnvironmentName}-project-images-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins: ["*"]
+            AllowedMethods: [GET]
+            AllowedHeaders: ["*"]
+
+  ProjectImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ProjectImagesBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "${ProjectImagesBucket.Arn}/*"
 
   # ═══════════════════════════════════════════════════════════════
   # APPLICATION LOAD BALANCER
@@ -620,6 +798,8 @@ Resources:
                   - !GetAtt ResumeUploadBucket.Arn
                   - !Sub "${ForumImagesBucket.Arn}/*"
                   - !GetAtt ForumImagesBucket.Arn
+                  - !Sub "${ProjectImagesBucket.Arn}/*"
+                  - !GetAtt ProjectImagesBucket.Arn
         - PolicyName: DynamoDBAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -638,8 +818,16 @@ Resources:
                   - !GetAtt BadgeAchievementTable.Arn
                   - !GetAtt ForumQuestionsTable.Arn
                   - !GetAtt ForumAnswersTable.Arn
+                  - !GetAtt ForumNotificationsTable.Arn
+                  - !GetAtt ConnectionsTable.Arn
+                  - !GetAtt ProjectsTable.Arn
+                  - !GetAtt ProjectReviewsTable.Arn
                   - !Sub "${ForumQuestionsTable.Arn}/index/*"
                   - !Sub "${ForumAnswersTable.Arn}/index/*"
+                  - !Sub "${ForumNotificationsTable.Arn}/index/*"
+                  - !Sub "${ConnectionsTable.Arn}/index/*"
+                  - !Sub "${ProjectsTable.Arn}/index/*"
+                  - !Sub "${ProjectReviewsTable.Arn}/index/*"
         - PolicyName: BedrockAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -667,6 +855,15 @@ Resources:
               - Effect: Allow
                 Action:
                   - "rekognition:DetectModerationLabels"
+                Resource: "*"
+        - PolicyName: ComprehendAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "comprehend:DetectToxicContent"
+                  - "comprehend:DetectSentiment"
                 Resource: "*"
         - PolicyName: SESAccess
           PolicyDocument:
@@ -728,8 +925,18 @@ Resources:
               Value: !Ref ForumQuestionsTable
             - Name: ReRhythm__ForumAnswersTable
               Value: !Ref ForumAnswersTable
+            - Name: ReRhythm__ForumNotificationsTable
+              Value: !Ref ForumNotificationsTable
             - Name: ReRhythm__ForumImagesBucket
               Value: !Ref ForumImagesBucket
+            - Name: ReRhythm__ConnectionsTable
+              Value: !Ref ConnectionsTable
+            - Name: ReRhythm__ProjectsTable
+              Value: !Ref ProjectsTable
+            - Name: ReRhythm__ProjectReviewsTable
+              Value: !Ref ProjectReviewsTable
+            - Name: ReRhythm__ProjectImagesBucket
+              Value: !Ref ProjectImagesBucket
             - Name: ReRhythm__RagMode
               Value: DIRECT
             - Name: ReRhythm__MaxTokens

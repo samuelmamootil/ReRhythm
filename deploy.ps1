@@ -59,7 +59,7 @@ Write-Host "Docker login successful" -ForegroundColor Green
 
 # Step 3: Build Docker Image
 Write-Host "`nBuilding Docker image..." -ForegroundColor Yellow
-docker build -t ${EcrRepoName}:${ImageTag} .
+docker build --no-cache -t ${EcrRepoName}:${ImageTag} .
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Docker build failed" -ForegroundColor Red
     exit 1
@@ -170,7 +170,23 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "CloudFormation stack deployed" -ForegroundColor Green
 
-# Step 6: Get Outputs
+# Step 6: Verify SES Email for Forum Notifications
+Write-Host "`nVerifying SES email for forum notifications..." -ForegroundColor Yellow
+$sesEmail = "mamootilsamuel1@gmail.com"
+$ErrorActionPreference = "SilentlyContinue"
+$emailVerified = aws ses get-identity-verification-attributes --identities $sesEmail --region $Region --query "VerificationAttributes.'$sesEmail'.VerificationStatus" --output text 2>&1
+$ErrorActionPreference = "Continue"
+
+if ($emailVerified -ne "Success") {
+    Write-Host "Sending verification email to $sesEmail..." -ForegroundColor Yellow
+    aws ses verify-email-identity --email-address $sesEmail --region $Region 2>&1 | Out-Null
+    Write-Host "Verification email sent to $sesEmail" -ForegroundColor Cyan
+    Write-Host "   Please check your inbox and click the verification link" -ForegroundColor White
+} else {
+    Write-Host "Email $sesEmail already verified" -ForegroundColor Green
+}
+
+# Step 7: Get Outputs
 Write-Host "`nDeployment Complete!" -ForegroundColor Green
 Write-Host "================================" -ForegroundColor Green
 

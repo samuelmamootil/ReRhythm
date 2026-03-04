@@ -3,6 +3,7 @@ using Amazon.DynamoDBv2;
 using Amazon.S3;
 using Amazon.Textract;
 using Amazon.Rekognition;
+using Amazon.Comprehend;
 using Amazon.SimpleEmail;
 using ReRhythm.Core.Services;
 using QuestPDF.Infrastructure;
@@ -20,6 +21,7 @@ builder.Services.AddAWSService<IAmazonTextract>();
 builder.Services.AddAWSService<IAmazonDynamoDB>();
 builder.Services.AddAWSService<IAmazonBedrockRuntime>();  // ✅ Now resolves correctly
 builder.Services.AddAWSService<IAmazonRekognition>();
+builder.Services.AddAWSService<IAmazonComprehend>();
 builder.Services.AddAWSService<IAmazonSimpleEmailService>();
 
 // ── App Services ──────────────────────────────────────
@@ -31,6 +33,9 @@ builder.Services.AddScoped<ResumeGeneratorService>();
 builder.Services.AddScoped<CertificateService>();
 builder.Services.AddScoped<BadgeService>();
 builder.Services.AddScoped<ForumService>();
+builder.Services.AddScoped<NetworkingService>();
+builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<ResumeBuilderService>(sp => 
     new ResumeBuilderService(
         sp.GetRequiredService<IAmazonBedrockRuntime>(),

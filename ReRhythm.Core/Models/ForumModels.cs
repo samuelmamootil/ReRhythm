@@ -27,3 +27,15 @@ public class ForumAnswer
     public List<string> UpvotedBy { get; set; } = new();
     public List<string> DownvotedBy { get; set; } = new();
 }
+
+public class ForumNotification
+{
+    public string NotificationId { get; set; } = Guid.NewGuid().ToString();
+    public string UserId { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty; // "answer", "vote", "accepted", "violation"
+    public string Message { get; set; } = string.Empty;
+    public string? QuestionId { get; set; }
+    public string? AnswerId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsRead { get; set; } = false;
+}

@@ -1,0 +1,98 @@
+@model List<(ReRhythm.Core.Models.ConnectionRequest Request, ReRhythm.Core.Models.UserProfile Profile)>
+@{
+    ViewData["Title"] = "Connection Requests";
+    var userId = ViewBag.UserId;
+    var userName = ViewBag.UserName;
+}
+
+<div class="hero-bg min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-16">
+    
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-extrabold mb-4">
+        <span class="beat-text">Connection Requests</span>
+      </h1>
+      <p class="text-slate-400 text-lg">Manage your pending connection requests</p>
+    </div>
+
+    <div class="mb-8">
+      <a href="@Url.Action("Index", "Networking", new { userId })" class="text-sky-400 hover:text-sky-300 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Browse
+      </a>
+    </div>
+
+    <div class="space-y-4">
+      @foreach (var item in Model)
+      {
+        <div class="glass-card rounded-xl p-6 border border-slate-700">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-white mb-2">@item.Profile.Name</h3>
+              <p class="text-sky-400 text-sm font-semibold mb-1">@item.Profile.TargetRole</p>
+              <p class="text-slate-500 text-xs mb-3">@item.Profile.Industry</p>
+              
+              @if (!string.IsNullOrEmpty(item.Request.Message))
+              {
+                <div class="bg-slate-800/50 rounded-lg p-3 mb-3">
+                  <p class="text-slate-300 text-sm">@item.Request.Message</p>
+                </div>
+              }
+              
+              <p class="text-slate-500 text-xs">Sent @item.Request.CreatedAt.ToString("MMM dd, yyyy")</p>
+            </div>
+
+            <div class="flex gap-2">
+              <button onclick="acceptRequest('@item.Request.ConnectionId')" 
+                      class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors">
+                Accept
+              </button>
+              <button onclick="rejectRequest('@item.Request.ConnectionId')" 
+                      class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors">
+                Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (!Model.Any())
+    {
+      <div class="text-center py-12">
+        <div class="text-6xl mb-4">📭</div>
+        <p class="text-slate-400 text-lg mb-4">No pending connection requests</p>
+        <a href="@Url.Action("Index", "Networking", new { userId })" class="glow-btn px-6 py-3 rounded-xl font-semibold inline-block">
+          Browse Members
+        </a>
+      </div>
+    }
+
+  </div>
+</div>
+
+<script>
+  async function acceptRequest(connectionId) {
+    const response = await fetch('@Url.Action("AcceptRequest")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ connectionId })
+    });
+    
+    const result = await response.json();
+    if (result.success) location.reload();
+  }
+
+  async function rejectRequest(connectionId) {
+    const response = await fetch('@Url.Action("RejectRequest")', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ connectionId })
+    });
+    
+    const result = await response.json();
+    if (result.success) location.reload();
+  }
+</script>

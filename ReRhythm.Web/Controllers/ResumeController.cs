@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ReRhythm.Core.Services;
+using ReRhythm.Core.Models;
 
 namespace ReRhythm.Web.Controllers;
 
@@ -65,19 +66,17 @@ public class ResumeController : Controller
             if (existingPlan != null)
                 return Json(new { success = false, error = "User ID already exists. Please choose a different one." });
 
-            // Check cache for same user + role
-            if (existingPlan != null && existingPlan.TargetRole == targetRole)
-            {
-                return Json(new { success = true, redirectUrl = Url.Action("Analysis", new { userId }) });
-            }
-
             await using var stream = resume.OpenReadStream();
-            var (resumeText, fullName, contactInfo) = await _textract.UploadAndParseResumeAsync(
+            var resumeData = await _textract.UploadAndParseResumeAsync(
                 stream, resume.FileName, userId, ct);
 
+            var contactInfo = $"{resumeData.Email}  •  {resumeData.Phone}";
+            if (!string.IsNullOrEmpty(resumeData.LinkedIn))
+                contactInfo += $"  •  {resumeData.LinkedIn}";
+
             var plan = await _roadmap.GenerateRoadmapAsync(
-                userId, resumeText, targetRole, industry, totalYearsOfExperience, yearsInTargetIndustry, 
-                fullName, contactInfo, personalityType, null, ct);
+                userId, resumeData.ParsedText, targetRole, industry, totalYearsOfExperience, yearsInTargetIndustry, 
+                resumeData.Name, contactInfo, personalityType, resumeData, null, ct);
 
             return Json(new { success = true, redirectUrl = Url.Action("Analysis", new { userId }) });
         }

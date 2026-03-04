@@ -1,0 +1,101 @@
+@{
+    ViewData["Title"] = "Advanced Topics";
+    var userId = ViewBag.UserId;
+    var targetRole = ViewBag.TargetRole;
+    var topics = ViewBag.Topics as List<string> ?? new List<string>();
+}
+
+<div class="hero-bg min-h-screen px-6 py-10">
+  
+  <div class="max-w-6xl mx-auto">
+    
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <div class="flex justify-center items-center gap-1 mb-4">
+        <img src="~/rhythmlogo.svg" alt="ReRhythm Logo" class="w-16 h-16" />
+        <h1 class="text-4xl font-extrabold"><span class="re-text">Re</span><span style="color: #38BDF8;">Rhythm</span></h1>
+      </div>
+      <h1 class="text-5xl font-extrabold mb-4">
+        Advanced <span class="beat-text">Topics</span>
+      </h1>
+      <p class="text-slate-400 text-lg">Level up your @targetRole expertise</p>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mb-8">
+      <a asp-controller="Roadmap" asp-action="Tracker" asp-route-userId="@userId"
+         class="text-slate-400 hover:text-white transition-colors">
+        ← Back to Tracker
+      </a>
+    </div>
+
+    <!-- Topics Grid -->
+    <div class="grid md:grid-cols-2 gap-6 mb-12">
+      @foreach (var topic in topics)
+      {
+        <div class="glass-card rounded-2xl p-8 border border-slate-700 hover:border-sky-500 transition-all">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-sky-500/20 rounded-xl flex items-center justify-center text-2xl">📚</div>
+            <h3 class="text-xl font-bold text-white">@topic</h3>
+          </div>
+          <p class="text-slate-300 text-sm mb-6">Master advanced concepts and techniques for @targetRole</p>
+          <a href="@Url.Action("Topic", new { userId, topicName = topic })" 
+             class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors block text-center">
+            Start Learning
+          </a>
+        </div>
+      }
+    </div>
+
+    <!-- Coming Soon Message -->
+    <div class="glass-card rounded-2xl p-8 border-2 border-emerald-500/30 text-center">
+      <div class="text-5xl mb-4">🎓</div>
+      <h2 class="text-2xl font-bold text-white mb-3">Congratulations on Completing 28 Days!</h2>
+      <p class="text-slate-300 mb-4">You've unlocked advanced learning paths. Each topic includes in-depth lessons, real-world projects, and expert-level content.</p>
+      <p class="text-sm text-emerald-400">Click any topic above to start your advanced journey!</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function showComingSoon(topic) {
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+      <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn" onclick="this.remove()">
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-sky-500 rounded-2xl p-8 max-w-md mx-4 shadow-2xl animate-slideUp" onclick="event.stopPropagation()">
+          <div class="text-center">
+            <div class="text-6xl mb-4">📚</div>
+            <h3 class="text-2xl font-bold text-white mb-3">${topic}</h3>
+            <p class="text-slate-300 mb-6 leading-relaxed">This advanced topic is being developed! We're creating in-depth content for graduates.</p>
+            <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-6">
+              <p class="text-sm text-sky-400 mb-2">✨ Coming Soon</p>
+              <p class="text-xs text-slate-400">We'll notify you when ${topic} content is ready</p>
+            </div>
+            <button onclick="this.closest('.fixed').remove()" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+              Got it!
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+</script>
+
+<style>
+  @@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+  .animate-slideUp {
+    animation: slideUp 0.4s ease-out;
+  }
+</style>

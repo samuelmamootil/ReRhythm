@@ -4,6 +4,8 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.Rekognition;
 using Amazon.Rekognition.Model;
+using Amazon.Comprehend;
+using Amazon.Comprehend.Model;
 using Amazon.SimpleEmail;
 using Amazon.SimpleEmail.Model;
 using Microsoft.Extensions.Logging;
@@ -16,11 +18,13 @@ public class ForumService
     private readonly IAmazonDynamoDB _dynamoDb;
     private readonly IAmazonS3 _s3;
     private readonly IAmazonRekognition _rekognition;
+    private readonly IAmazonComprehend _comprehend;
     private readonly IAmazonSimpleEmailService _ses;
     private readonly DynamoDbService _dynamoDbService;
     private readonly ILogger<ForumService> _logger;
     private readonly string _questionsTable;
     private readonly string _answersTable;
+    private readonly string _notificationsTable;
     private readonly string _bucketName;
     private readonly string _region;
 
@@ -28,6 +32,7 @@ public class ForumService
         IAmazonDynamoDB dynamoDb,
         IAmazonS3 s3,
         IAmazonRekognition rekognition,
+        IAmazonComprehend comprehend,
         IAmazonSimpleEmailService ses,
         DynamoDbService dynamoDbService,
         ILogger<ForumService> logger,
@@ -36,11 +41,13 @@ public class ForumService
         _dynamoDb = dynamoDb;
         _s3 = s3;
         _rekognition = rekognition;
+        _comprehend = comprehend;
         _ses = ses;
         _dynamoDbService = dynamoDbService;
         _logger = logger;
         _questionsTable = config["ReRhythm:ForumQuestionsTable"] ?? "rerythm-prod-forum-questions";
         _answersTable = config["ReRhythm:ForumAnswersTable"] ?? "rerythm-prod-forum-answers";
+        _notificationsTable = config["ReRhythm:ForumNotificationsTable"] ?? "rerythm-prod-forum-notifications";
         _bucketName = config["ReRhythm:ForumImagesBucket"] ?? "rerythm-prod-forum-images-250025622388";
         _region = config["AWS:Region"] ?? "us-east-1";
     }
@@ -65,6 +72,65 @@ public class ForumService
             return (false, $"Inappropriate content detected: {labels}");
         }
 
+        return (true, string.Empty);
+    }
+
+    public async Task<(bool IsAppropriate, string Reason)> ModerateTextAsync(string text, CancellationToken ct)
+    {
+        // Quick fallback check first (faster)
+        var (fallbackOk, fallbackReason) = ModerateTextFallback(text);
+        if (!fallbackOk)
+            return (false, fallbackReason);
+
+        // Then AWS Comprehend for deeper analysis
+        try
+        {
+            var request = new DetectToxicContentRequest
+            {
+                TextSegments = new List<TextSegment> { new TextSegment { Text = text } },
+                LanguageCode = LanguageCode.En
+            };
+
+            var response = await _comprehend.DetectToxicContentAsync(request, ct);
+            
+            foreach (var result in response.ResultList)
+            {
+                var toxicLabels = result.Labels.Where(l => l.Score > 0.7f).Select(l => l.Name).ToList();
+                if (toxicLabels.Any())
+                    return (false, $"Inappropriate content detected: {string.Join(", ", toxicLabels)}");
+            }
+            
+            return (true, string.Empty);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Comprehend moderation failed");
+            return (true, string.Empty); // Already passed fallback
+        }
+    }
+
+    private (bool IsAppropriate, string Reason) ModerateTextFallback(string text)
+    {
+        var lowerText = text.ToLower();
+        
+        // Basic profanity filter
+        var offensiveWords = new[] { "fuck", "shit", "bitch", "asshole", "damn", "crap", "bastard", "dick", "pussy", "cock" };
+        foreach (var word in offensiveWords)
+        {
+            if (lowerText.Contains(word))
+                return (false, "Inappropriate language detected");
+        }
+        
+        // Spam indicators
+        if (text.Count(c => c == '!') > 5 || text.Count(c => c == '?') > 5)
+            return (false, "Excessive punctuation detected");
+        
+        if (System.Text.RegularExpressions.Regex.Matches(text, @"http[s]?://").Count > 3)
+            return (false, "Too many links detected");
+        
+        if (text.Length > 20 && text.Count(char.IsUpper) > text.Length * 0.7)
+            return (false, "Excessive capitalization detected");
+        
         return (true, string.Empty);
     }
 
@@ -148,6 +214,41 @@ public class ForumService
             TableName = _answersTable,
             Item = item
         }, ct);
+
+        // Notify question author
+        try
+        {
+            var question = await GetQuestionAsync(answer.QuestionId, ct);
+            _logger.LogInformation("Question found: {QuestionId}, Author: {UserId}, Answerer: {AnswerUserId}", 
+                question?.QuestionId, question?.UserId, answer.UserId);
+            
+            if (question != null && question.UserId != answer.UserId)
+            {
+                var notification = new ForumNotification
+                {
+                    UserId = question.UserId,
+                    Type = "answer",
+                    Message = $"{answer.UserName} answered your question: {question.Title}",
+                    QuestionId = answer.QuestionId,
+                    AnswerId = answer.AnswerId
+                };
+                
+                _logger.LogInformation("Creating notification for user {UserId}: {Message}", 
+                    notification.UserId, notification.Message);
+                
+                await CreateNotificationAsync(notification, ct);
+                
+                _logger.LogInformation("Notification created successfully");
+            }
+            else
+            {
+                _logger.LogInformation("Skipping notification - same user or question not found");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create answer notification");
+        }
 
         return answer.AnswerId;
     }
@@ -329,6 +430,161 @@ public class ForumService
         }, ct);
     }
 
+    public async Task DeleteAnswerAsync(string answerId, CancellationToken ct)
+    {
+        await _dynamoDb.DeleteItemAsync(new DeleteItemRequest
+        {
+            TableName = _answersTable,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                ["AnswerId"] = new AttributeValue { S = answerId }
+            }
+        }, ct);
+    }
+
+    public async Task NotifyViolationAsync(string userId, string contentType, string reason, CancellationToken ct)
+    {
+        try
+        {
+            // Create in-app notification first
+            await CreateNotificationAsync(new ForumNotification
+            {
+                UserId = userId,
+                Type = "violation",
+                Message = $"Your {contentType} was removed: {reason}"
+            }, ct);
+            
+            _logger.LogInformation("Violation notification created for user {UserId}", userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create in-app notification for user {UserId}", userId);
+        }
+
+        // Send email
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var plan = await _dynamoDbService.GetLatestRoadmapAsync(userId, CancellationToken.None);
+                if (plan == null || string.IsNullOrEmpty(plan.Email))
+                    return;
+
+                await _ses.SendEmailAsync(new SendEmailRequest
+                {
+                    Source = "mamootilsamuel1@gmail.com",
+                    Destination = new Destination { ToAddresses = new List<string> { plan.Email } },
+                    Message = new Message
+                    {
+                        Subject = new Content("ReRhythm Forum - Content Removed"),
+                        Body = new Body
+                        {
+                            Html = new Content($@"
+                                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                    <h2 style='color: #ef4444;'>Content Removed - Community Guidelines Violation</h2>
+                                    <p>Hello {plan.FullName?.Split('\n')[0]?.Trim() ?? "User"},</p>
+                                    <p>Your recent forum {contentType} has been removed for violating our community guidelines.</p>
+                                    <div style='background: #fee; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0;'>
+                                        <strong>Reason:</strong> {reason}
+                                    </div>
+                                    <p><strong>Our Community Guidelines:</strong></p>
+                                    <ul>
+                                        <li>Be respectful and professional</li>
+                                        <li>No offensive language or harassment</li>
+                                        <li>No spam or excessive self-promotion</li>
+                                        <li>No inappropriate images or content</li>
+                                    </ul>
+                                    <p>Please review our guidelines before posting again. Repeated violations may result in account restrictions.</p>
+                                    <p>If you believe this was a mistake, please reply to this email.</p>
+                                    <hr style='margin: 30px 0; border: none; border-top: 1px solid #ddd;' />
+                                    <p style='color: #666; font-size: 12px;'>ReRhythm Community Team</p>
+                                </div>
+                            ")
+                        }
+                    }
+                }, CancellationToken.None);
+
+                _logger.LogInformation("Violation email sent to {Email} for {ContentType}", plan.Email, contentType);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send violation email to user {UserId}", userId);
+            }
+        });
+    }
+
+    public async Task CreateNotificationAsync(ForumNotification notification, CancellationToken ct)
+    {
+        await _dynamoDb.PutItemAsync(new PutItemRequest
+        {
+            TableName = _notificationsTable,
+            Item = new Dictionary<string, AttributeValue>
+            {
+                ["NotificationId"] = new AttributeValue { S = notification.NotificationId },
+                ["UserId"] = new AttributeValue { S = notification.UserId },
+                ["Type"] = new AttributeValue { S = notification.Type },
+                ["Message"] = new AttributeValue { S = notification.Message },
+                ["QuestionId"] = new AttributeValue { S = notification.QuestionId ?? "" },
+                ["AnswerId"] = new AttributeValue { S = notification.AnswerId ?? "" },
+                ["CreatedAt"] = new AttributeValue { S = notification.CreatedAt.ToString("o") },
+                ["IsRead"] = new AttributeValue { BOOL = notification.IsRead }
+            }
+        }, ct);
+    }
+
+    public async Task<List<ForumNotification>> GetUserNotificationsAsync(string userId, CancellationToken ct)
+    {
+        try
+        {
+            var response = await _dynamoDb.QueryAsync(new QueryRequest
+            {
+                TableName = _notificationsTable,
+                IndexName = "UserId-CreatedAt-Index",
+                KeyConditionExpression = "UserId = :uid",
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                {
+                    [":uid"] = new AttributeValue { S = userId }
+                },
+                ScanIndexForward = false,
+                Limit = 50
+            }, ct);
+
+            return response.Items.Select(item => new ForumNotification
+            {
+                NotificationId = item["NotificationId"].S,
+                UserId = item["UserId"].S,
+                Type = item["Type"].S,
+                Message = item["Message"].S,
+                QuestionId = item.ContainsKey("QuestionId") && !string.IsNullOrEmpty(item["QuestionId"].S) ? item["QuestionId"].S : null,
+                AnswerId = item.ContainsKey("AnswerId") && !string.IsNullOrEmpty(item["AnswerId"].S) ? item["AnswerId"].S : null,
+                CreatedAt = DateTime.Parse(item["CreatedAt"].S),
+                IsRead = item.ContainsKey("IsRead") && item["IsRead"].BOOL.HasValue ? item["IsRead"].BOOL.Value : false
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get notifications for user {UserId}", userId);
+            return new List<ForumNotification>();
+        }
+    }
+
+    public async Task MarkNotificationReadAsync(string notificationId, CancellationToken ct)
+    {
+        await _dynamoDb.UpdateItemAsync(new UpdateItemRequest
+        {
+            TableName = _notificationsTable,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                ["NotificationId"] = new AttributeValue { S = notificationId }
+            },
+            UpdateExpression = "SET IsRead = :val",
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                [":val"] = new AttributeValue { BOOL = true }
+            }
+        }, ct);
+    }
+
     private async Task NotifyUsersAsync(string industry, string questionTitle, string questionId, CancellationToken ct)
     {
         try
@@ -351,13 +607,9 @@ public class ForumService
                 {
                     var userId = item["UserId"].S;
                     var plan = await _dynamoDbService.GetLatestRoadmapAsync(userId, ct);
-                    if (plan?.ContactInfo != null && plan.ContactInfo.Contains("@"))
+                    if (!string.IsNullOrEmpty(plan?.Email))
                     {
-                        var email = System.Text.RegularExpressions.Regex.Match(plan.ContactInfo, @"[\w\.-]+@[\w\.-]+\.\w+").Value;
-                        if (!string.IsNullOrEmpty(email))
-                        {
-                            await SendEmailAsync(email, questionTitle, questionId, ct);
-                        }
+                        await SendEmailAsync(plan.Email, questionTitle, questionId, ct);
                     }
                 }
                 catch { }
@@ -375,7 +627,7 @@ public class ForumService
         {
             await _ses.SendEmailAsync(new SendEmailRequest
             {
-                Source = "noreply@rerythm.com",
+                Source = "mamootilsamuel1@gmail.com",
                 Destination = new Destination { ToAddresses = new List<string> { toEmail } },
                 Message = new Message
                 {

@@ -18,6 +18,10 @@ public class JobController : Controller
         if (roadmap == null)
             return RedirectToAction("Upload", "Resume");
 
+        // Gold tier check
+        if (roadmap.SubscriptionTier != "Gold")
+            return RedirectToAction("Upgrade", "Premium");
+
         ViewBag.UserId = userId;
         return View(roadmap);
     }
