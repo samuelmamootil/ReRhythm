@@ -12,7 +12,7 @@ public class PremiumController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> UpgradeUser(string userId, CancellationToken ct)
+    public async Task<IActionResult> UpgradeUser(string userId, string tier, CancellationToken ct)
     {
         var dynamoDb = HttpContext.RequestServices.GetRequiredService<DynamoDbService>();
         var plan = await dynamoDb.GetLatestRoadmapAsync(userId, ct);
@@ -20,9 +20,12 @@ public class PremiumController : Controller
         if (plan == null)
             return Json(new { success = false, error = "User not found" });
         
-        plan.SubscriptionTier = "Gold";
+        if (tier != "Silver" && tier != "Gold")
+            return Json(new { success = false, error = "Invalid tier selected" });
+        
+        plan.SubscriptionTier = tier;
         await dynamoDb.SaveRoadmapAsync(plan, ct);
         
-        return Json(new { success = true, message = "Upgraded to Gold successfully!" });
+        return Json(new { success = true, message = $"Upgraded to {tier} successfully!" });
     }
 }

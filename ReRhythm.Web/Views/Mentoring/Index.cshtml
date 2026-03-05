@@ -1,0 +1,123 @@
+@{
+    ViewData["Title"] = "1-on-1 Mentoring";
+}
+
+<div class="hero-bg min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-16">
+    
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-extrabold mb-4">
+        1-on-1 <span style="background: linear-gradient(135deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Mentoring</span>
+      </h1>
+      <p class="text-slate-400 text-lg">Get personalized guidance from industry experts</p>
+      <div class="mt-4">
+        @await Html.PartialAsync("_PremiumBadge", (string)ViewBag.SubscriptionTier)
+      </div>
+    </div>
+
+    <!-- Available Mentors -->
+    <div class="grid lg:grid-cols-3 gap-8 mb-12">
+      
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+            JS
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-white">John Smith</h3>
+            <p class="text-slate-400">Senior @ViewBag.TargetRole</p>
+            <p class="text-yellow-400 text-sm">⭐ 4.9 (127 sessions)</p>
+          </div>
+        </div>
+        <p class="text-slate-300 mb-4">15+ years in @ViewBag.Industry. Specialized in career transitions and technical leadership.</p>
+        <div class="flex gap-2 mb-4">
+          <span class="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs">Leadership</span>
+          <span class="bg-green-500/20 text-green-300 px-2 py-1 rounded text-xs">Career Growth</span>
+        </div>
+        <button onclick="bookSession('mentor-1', 'John Smith')" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-xl font-semibold hover:opacity-90">
+          Book Session
+        </button>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+            MJ
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-white">Maria Johnson</h3>
+            <p class="text-slate-400">Principal @ViewBag.TargetRole</p>
+            <p class="text-yellow-400 text-sm">⭐ 4.8 (89 sessions)</p>
+          </div>
+        </div>
+        <p class="text-slate-300 mb-4">12+ years building scalable systems. Expert in technical interviews and system design.</p>
+        <div class="flex gap-2 mb-4">
+          <span class="bg-purple-500/20 text-purple-300 px-2 py-1 rounded text-xs">System Design</span>
+          <span class="bg-orange-500/20 text-orange-300 px-2 py-1 rounded text-xs">Interviews</span>
+        </div>
+        <button onclick="bookSession('mentor-2', 'Maria Johnson')" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-xl font-semibold hover:opacity-90">
+          Book Session
+        </button>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+            DL
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-white">David Lee</h3>
+            <p class="text-slate-400">VP of Engineering</p>
+            <p class="text-yellow-400 text-sm">⭐ 5.0 (45 sessions)</p>
+          </div>
+        </div>
+        <p class="text-slate-300 mb-4">20+ years in @ViewBag.Industry. Focuses on executive presence and strategic thinking.</p>
+        <div class="flex gap-2 mb-4">
+          <span class="bg-teal-500/20 text-teal-300 px-2 py-1 rounded text-xs">Strategy</span>
+          <span class="bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded text-xs">Executive</span>
+        </div>
+        <button onclick="bookSession('mentor-3', 'David Lee')" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-xl font-semibold hover:opacity-90">
+          Book Session
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Live Q&A Sessions -->
+    <div class="glass-card rounded-2xl p-8">
+      <h2 class="text-2xl font-bold text-white mb-6">🎥 Live Q&A Sessions</h2>
+      <p class="text-slate-400 mb-6">Join weekly live sessions with industry leaders</p>
+      
+      <div class="space-y-4">
+        <div class="bg-slate-800/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-white font-semibold">System Design Fundamentals</h3>
+            <p class="text-slate-400 text-sm">with Sarah Chen, Staff Engineer at Meta</p>
+            <p class="text-yellow-400 text-sm">This Friday, 2:00 PM PST</p>
+          </div>
+          <button class="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-xl font-semibold hover:opacity-90">
+            Join Live
+          </button>
+        </div>
+
+        <div class="bg-slate-800/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-white font-semibold">Negotiating Your Salary</h3>
+            <p class="text-slate-400 text-sm">with Michael Torres, Engineering Manager at Google</p>
+            <p class="text-slate-400 text-sm">Next Tuesday, 6:00 PM PST</p>
+          </div>
+          <button class="bg-slate-600 text-slate-300 px-4 py-2 rounded-xl font-semibold">
+            Set Reminder
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function bookSession(mentorId, mentorName) {
+    alert(`Booking session with ${mentorName}. In production, this would open a scheduling interface.`);
+  }
+</script>

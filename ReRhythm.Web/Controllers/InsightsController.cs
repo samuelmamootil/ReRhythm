@@ -27,13 +27,17 @@ public class InsightsController : Controller
         ViewBag.UserId = userId;
         ViewBag.SubscriptionTier = plan.SubscriptionTier ?? "Basic";
 
-        // Check if Gold tier
-        if (plan.SubscriptionTier != "Gold")
+        // Check if Silver or Gold tier for insights access
+        if (plan.SubscriptionTier != "Silver" && plan.SubscriptionTier != "Gold")
         {
             return View("PremiumRequired");
         }
 
-        // Get all insights
+        // Silver tier gets basic insights, Gold tier gets advanced insights
+        var isSilver = plan.SubscriptionTier == "Silver";
+        var isGold = plan.SubscriptionTier == "Gold";
+
+        // Get insights based on tier
         var industryInsights = await _analytics.GetIndustryInsightsAsync(plan.Industry, ct);
         var skillGap = await _analytics.GetSkillGapAnalysisAsync(userId, ct);
         var resumeScore = await _analytics.CalculateResumeScoreAsync(plan, ct);
@@ -45,6 +49,8 @@ public class InsightsController : Controller
         ViewBag.SalaryInsights = salaryInsights;
         ViewBag.TargetRole = plan.TargetRole;
         ViewBag.Industry = plan.Industry;
+        ViewBag.IsSilver = isSilver;
+        ViewBag.IsGold = isGold;
 
         return View(plan);
     }
