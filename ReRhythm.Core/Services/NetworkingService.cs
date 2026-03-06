@@ -30,16 +30,27 @@ public class NetworkingService
     {
         try
         {
-            // Get all roadmaps and filter by industry
             var allRoadmaps = await _dynamoDbService.GetAllRoadmapsAsync(ct);
-            var industryRoadmaps = allRoadmaps
+            
+            // Group by UserId and take only the latest roadmap per user
+            var latestRoadmaps = allRoadmaps
                 .Where(r => r.Industry == industry && r.UserId != currentUserId)
+                .GroupBy(r => r.UserId)
+                .Select(g => g.OrderByDescending(r => r.GeneratedAt).First())
                 .Take(50)
                 .ToList();
 
             var profiles = new List<UserProfile>();
-            foreach (var plan in industryRoadmaps)
+            var seenUserIds = new HashSet<string>();
+            
+            foreach (var plan in latestRoadmaps)
             {
+                // Extra safety check to prevent duplicates
+                if (seenUserIds.Contains(plan.UserId))
+                    continue;
+                    
+                seenUserIds.Add(plan.UserId);
+                
                 try
                 {
                     var lessons = await _dynamoDbService.GetAllLessonsForUserAsync(plan.UserId, ct);

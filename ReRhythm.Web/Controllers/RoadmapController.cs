@@ -245,9 +245,13 @@ public partial class RoadmapController : Controller
         var completedLessons = allLessons.Where(l => l.IsCompleted).ToList();
         var totalLessons = plan.Modules?.Sum(m => m.DailySprints?.Count ?? 0) ?? 0;
 
-        // Check if user completed all lessons
+        // CRITICAL: Backend validation - Check if user completed all lessons
         if (completedLessons.Count < totalLessons)
-            return BadRequest("Complete all 28 lessons to earn your certificate.");
+        {
+            _logger.LogWarning("Certificate download blocked for user {UserId}. Completed: {Completed}/{Total}", 
+                userId, completedLessons.Count, totalLessons);
+            return BadRequest($"Complete all {totalLessons} lessons to earn your certificate. You have completed {completedLessons.Count} lessons.");
+        }
 
         var certificateService = HttpContext.RequestServices.GetRequiredService<CertificateService>();
         var pdfBytes = certificateService.GenerateCompletionCertificate(plan, completedLessons);
@@ -258,6 +262,7 @@ public partial class RoadmapController : Controller
         else
             userName = userName.Replace(" ", "_");
         
+        _logger.LogInformation("Certificate generated for user {UserId} with {Count} completed lessons", userId, completedLessons.Count);
         return File(pdfBytes, "application/pdf", $"ReRhythm_Certificate_{userName}_{DateTime.UtcNow:yyyyMMdd}.pdf");
     }
 

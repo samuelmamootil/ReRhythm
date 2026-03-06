@@ -153,51 +153,26 @@ public class CommunityController : Controller
 
             var questionId = await _forumService.PostQuestionAsync(question, ct);
             
-            // Moderate content in background - delete if abuse detected
+            // Moderate in background - delete if inappropriate
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    var textTask = Task.Run(async () =>
-                    {
-                        var (titleOk, titleReason) = await _forumService.ModerateTextAsync(title, CancellationToken.None);
-                        if (!titleOk) return (false, titleReason);
-                        
-                        var (contentOk, contentReason) = await _forumService.ModerateTextAsync(content, CancellationToken.None);
-                        return contentOk ? (true, string.Empty) : (false, contentReason);
-                    });
-
-                    var imageTask = Task.Run(async () =>
-                    {
-                        if (!imageUrls.Any()) return (true, string.Empty);
-                        
-                        using var httpClient = new HttpClient();
-                        foreach (var imageUrl in imageUrls)
-                        {
-                            var imageStream = await httpClient.GetStreamAsync(imageUrl);
-                            var (isAppropriate, reason) = await _forumService.ModerateImageAsync(imageStream, CancellationToken.None);
-                            if (!isAppropriate)
-                                return (false, reason);
-                        }
-                        return (true, string.Empty);
-                    });
-
-                    await Task.WhenAll(textTask, imageTask);
-                    
-                    var textResult = await textTask;
-                    var imageResult = await imageTask;
-                    
-                    if (!textResult.Item1)
+                    var (titleOk, titleReason) = await _forumService.ModerateTextAsync(title, CancellationToken.None);
+                    if (!titleOk)
                     {
                         await _forumService.DeleteQuestionAsync(questionId, CancellationToken.None);
-                        await _forumService.NotifyViolationAsync(userId, "question", textResult.Item2, CancellationToken.None);
-                        _logger.LogWarning("Question {QuestionId} deleted - Text: {Reason}", questionId, textResult.Item2);
+                        await _forumService.NotifyViolationAsync(userId, "question", titleReason, CancellationToken.None);
+                        _logger.LogWarning("Question {QuestionId} deleted - {Reason}", questionId, titleReason);
+                        return;
                     }
-                    else if (!imageResult.Item1)
+                    
+                    var (contentOk, contentReason) = await _forumService.ModerateTextAsync(content, CancellationToken.None);
+                    if (!contentOk)
                     {
                         await _forumService.DeleteQuestionAsync(questionId, CancellationToken.None);
-                        await _forumService.NotifyViolationAsync(userId, "question", imageResult.Item2, CancellationToken.None);
-                        _logger.LogWarning("Question {QuestionId} deleted - Image: {Reason}", questionId, imageResult.Item2);
+                        await _forumService.NotifyViolationAsync(userId, "question", contentReason, CancellationToken.None);
+                        _logger.LogWarning("Question {QuestionId} deleted - {Reason}", questionId, contentReason);
                     }
                 }
                 catch (Exception ex)
@@ -233,6 +208,7 @@ public class CommunityController : Controller
 
         var answerId = await _forumService.PostAnswerAsync(answer, ct);
         
+        // Moderate in background - delete if inappropriate
         _ = Task.Run(async () =>
         {
             try
@@ -242,7 +218,7 @@ public class CommunityController : Controller
                 {
                     await _forumService.DeleteAnswerAsync(answerId, CancellationToken.None);
                     await _forumService.NotifyViolationAsync(userId, "answer", reason, CancellationToken.None);
-                    _logger.LogWarning("Answer {AnswerId} deleted - Moderation failed: {Reason}", answerId, reason);
+                    _logger.LogWarning("Answer {AnswerId} deleted - {Reason}", answerId, reason);
                 }
             }
             catch (Exception ex)
@@ -295,5 +271,12 @@ public class CommunityController : Controller
     {
         await _forumService.MarkNotificationReadAsync(notificationId, ct);
         return Json(new { success = true });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CleanupInappropriatePosts(CancellationToken ct)
+    {
+        var deletedCount = await _forumService.CleanupInappropriatePostsAsync(ct);
+        return Json(new { success = true, deletedCount });
     }
 }

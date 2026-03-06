@@ -17,7 +17,7 @@
         Contact Education Team
       </a>
       <a href="/Resume/Upload" class="px-8 py-4 rounded-xl font-semibold text-white bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-700">
-        Try Demo
+        Start Your Journey
       </a>
     </div>
   </div>
@@ -68,38 +68,75 @@
 
   <!-- Contact Section -->
   <div id="contact" class="max-w-4xl mx-auto px-8 py-16">
+    
+    <!-- Success Stories -->
+    <div class="mb-16">
+      <h2 class="text-3xl font-bold text-center mb-12">Success Stories</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        
+        <div class="glass-card rounded-xl p-6 border border-slate-700">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="text-4xl">💼</div>
+            <div>
+              <p class="text-slate-300 italic mb-4">
+                "This is actually a great platform that can help potential job seekers feel 'less lost' by providing a sense of direction, like a nudge just in the right direction by considering the present situation, matching it with the goal and also providing a step by step guide in acquiring those skills👍🏻"
+              </p>
+              <p class="text-sky-400 font-semibold">— D.M</p>
+              <p class="text-slate-500 text-sm">Mid-career professional, ex-HR</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-6 border border-slate-700">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="text-4xl">🎓</div>
+            <div>
+              <p class="text-slate-300 italic mb-4">
+                "The website has a clean and modern design with easy navigation, making it simple for users to find information quickly. It loads efficiently and works well on mobile devices, which enhances the overall user experience."
+              </p>
+              <p class="text-sky-400 font-semibold">— P.P</p>
+              <p class="text-slate-500 text-sm">Student</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <div class="glass-card rounded-2xl p-12">
       <h2 class="text-3xl font-bold text-center mb-4">Get Started with ReRhythm</h2>
       <p class="text-slate-400 text-center mb-8">
         Join leading universities in preparing students for successful careers
       </p>
       
-      <form class="space-y-6">
+      <form id="contactForm" class="space-y-6">
         <div class="grid md:grid-cols-2 gap-6">
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">University Name</label>
-            <input type="text" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+            <label class="block text-sm font-medium text-slate-300 mb-2">University Name *</label>
+            <input type="text" id="universityName" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Your Name</label>
-            <input type="text" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+            <label class="block text-sm font-medium text-slate-300 mb-2">Your Name *</label>
+            <input type="text" id="yourName" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
           </div>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6">
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
-            <input type="email" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+            <label class="block text-sm font-medium text-slate-300 mb-2">Email *</label>
+            <input type="email" id="email" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+            <p class="text-xs text-slate-500 mt-1">Valid email required</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-300 mb-2">Phone</label>
-            <input type="tel" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" />
+            <input type="tel" id="phone" maxlength="15" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" placeholder="+1 (555) 123-4567" />
+            <p class="text-xs text-slate-500 mt-1">10-15 digits (optional)</p>
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">Number of Students</label>
-          <select class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
+          <label class="block text-sm font-medium text-slate-300 mb-2">Number of Students *</label>
+          <select id="studentCount" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
             <option value="">Select range</option>
             <option value="1-100">1-100</option>
             <option value="101-500">101-500</option>
@@ -109,8 +146,8 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">Message</label>
-          <textarea rows="4" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" placeholder="Tell us about your needs..."></textarea>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Message *</label>
+          <textarea id="message" rows="4" required class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" placeholder="Tell us about your needs..."></textarea>
         </div>
 
         <button type="submit" class="glow-btn w-full py-4 rounded-xl font-semibold text-white">
@@ -121,3 +158,29 @@
   </div>
 
 </div>
+
+@section Scripts {
+<script>
+  document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
+    
+    if (!email.value.match(/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+      alert('Please enter a valid email address');
+      email.focus();
+      return;
+    }
+    
+    if (phone.value && !phone.value.match(/^[0-9+\-\s\(\)]{10,15}$/)) {
+      alert('Please enter a valid phone number (10-15 digits)');
+      phone.focus();
+      return;
+    }
+    
+    alert('Thank you! Our education team will contact you soon.');
+    this.reset();
+  });
+</script>
+}

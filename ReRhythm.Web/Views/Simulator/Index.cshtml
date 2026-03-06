@@ -145,11 +145,26 @@
         else if (section === 'options' && /^[A-D]\)/.test(line.trim())) {
           scenario.options.push(line.trim());
         }
-        else if (section === 'correct') scenario.correct = line.trim().charAt(0);
+        else if (section === 'correct') {
+          const match = line.trim().match(/[A-D]/i);
+          if (match) {
+            scenario.correct = match[0].toUpperCase();
+          }
+        }
         else if (section === 'explanation') scenario.explanation += line + '\n';
       }
     }
     
+    // Fallback: Extract correct answer from explanation if not found
+    if (!scenario.correct && scenario.explanation) {
+      const explanationMatch = scenario.explanation.match(/Option ([A-D]) is the best/i);
+      if (explanationMatch) {
+        scenario.correct = explanationMatch[1].toUpperCase();
+        console.log('Extracted correct answer from explanation:', scenario.correct);
+      }
+    }
+    
+    console.log('Final parsed scenario:', scenario);
     return scenario;
   }
 
@@ -185,18 +200,18 @@
   }
 
   function selectOption(selected) {
-    const correct = currentScenario.correct.toLowerCase();
-    const isCorrect = selected.toLowerCase() === correct;
+    const correct = currentScenario.correct.toUpperCase();
+    const isCorrect = selected.toUpperCase() === correct;
     
     // Disable all buttons
     document.querySelectorAll('.option-btn').forEach(btn => {
       btn.disabled = true;
       btn.classList.remove('hover:border-sky-500');
-      const letter = btn.textContent.trim().charAt(0);
+      const letter = btn.textContent.trim().charAt(0).toUpperCase();
       
       if (letter === correct) {
         btn.classList.add('border-emerald-500', 'bg-emerald-500/20');
-      } else if (letter === selected) {
+      } else if (letter === selected.toUpperCase()) {
         btn.classList.add('border-red-500', 'bg-red-500/20');
       } else {
         btn.classList.add('opacity-50');
@@ -213,7 +228,7 @@
           </h3>
         </div>
         <p class="text-slate-300 mb-3">
-          ${isCorrect ? 'Great choice!' : `The best answer was option ${correct}.`}
+          ${isCorrect ? 'Great choice!' : `The best answer was option ${correct.toUpperCase()}.`}
         </p>
         <div class="bg-slate-800/60 rounded-lg p-4">
           <h4 class="text-sm font-semibold text-sky-400 mb-2">Explanation:</h4>

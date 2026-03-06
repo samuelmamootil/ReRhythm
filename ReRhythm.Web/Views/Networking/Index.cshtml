@@ -32,13 +32,13 @@
       </a>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-6">
+    <div class="grid md:grid-cols-2 gap-6" id="membersGrid" style="display: none;">
       @foreach (var member in Model)
       {
         var isConnected = connections.Contains(member.UserId);
         var progress = member.TotalLessons > 0 ? (member.CompletedLessons * 100 / member.TotalLessons) : 0;
         
-        <div class="glass-card rounded-xl p-6 border border-slate-700">
+        <div class="glass-card rounded-xl p-6 border border-slate-700" data-user-id="@member.UserId">
           <div class="flex items-start justify-between mb-4">
             <div>
               <h3 class="text-xl font-bold text-white mb-1">@member.Name</h3>
@@ -107,6 +107,22 @@
 </div>
 
 <script>
+  // Client-side deduplication safety
+  (function() {
+    const seen = new Set();
+    const cards = document.querySelectorAll('[data-user-id]');
+    cards.forEach(card => {
+      const userId = card.getAttribute('data-user-id');
+      if (seen.has(userId)) {
+        card.remove();
+      } else {
+        seen.add(userId);
+      }
+    });
+    // Show grid after deduplication
+    document.getElementById('membersGrid').style.display = 'grid';
+  })();
+
   function sendRequest(toUserId, toName) {
     document.getElementById('targetUserId').value = toUserId;
     document.getElementById('targetName').textContent = toName;

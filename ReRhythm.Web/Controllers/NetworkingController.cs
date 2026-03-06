@@ -29,6 +29,14 @@ public class NetworkingController : Controller
             if (plan == null) return RedirectToAction("Upload", "Resume");
 
             var members = await _networkingService.GetMembersByIndustryAsync(plan.Industry, userId, ct);
+            
+            _logger.LogInformation("Before deduplication: {Count} members", members.Count);
+            
+            // Extra deduplication safety at controller level
+            members = members.GroupBy(m => m.UserId).Select(g => g.First()).ToList();
+            
+            _logger.LogInformation("After deduplication: {Count} unique members", members.Count);
+            
             var connections = await _networkingService.GetConnectionsAsync(userId, ct);
             var pendingRequests = await _networkingService.GetPendingRequestsAsync(userId, ct);
 

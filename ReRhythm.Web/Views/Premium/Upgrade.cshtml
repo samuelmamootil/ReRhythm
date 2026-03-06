@@ -185,26 +185,6 @@
 
     </div>
 
-    <!-- Manual Upgrade (Demo Only) -->
-    <div class="glass-card rounded-2xl p-8 mb-12 border-2 border-yellow-500/30">
-      <h2 class="text-2xl font-bold text-white mb-4">Demo: Manual Upgrade</h2>
-      <p class="text-slate-400 mb-4">For demonstration purposes, enter your User ID to upgrade:</p>
-      
-      <form id="upgradeForm" class="flex gap-3">
-        <input type="text" id="userIdInput" placeholder="Enter your User ID" required
-               class="flex-1 bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white
-                      focus:outline-none focus:border-sky-500" />
-        <select id="tierSelect" class="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-white">
-          <option value="Silver">Silver ($16.99)</option>
-          <option value="Gold">Gold ($26.99)</option>
-        </select>
-        <button type="submit" class="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-8 py-3 rounded-xl font-bold hover:opacity-90">
-          Upgrade Now
-        </button>
-      </form>
-      <p class="text-xs text-slate-500 mt-3">Note: This is a demo feature. In production, this would be handled by payment gateway.</p>
-    </div>
-
     <script>
       function upgradeTo(tier) {
         const userId = prompt(`Enter your User ID to upgrade to ${tier}:`);
@@ -228,20 +208,6 @@
         }
       }
 
-      document.getElementById('upgradeForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('userIdInput').value;
-        const tier = document.getElementById('tierSelect').value;
-        const btn = e.target.querySelector('button');
-        btn.disabled = true;
-        btn.textContent = 'Upgrading...';
-        
-        await upgradeUser(userId, tier);
-        
-        document.getElementById('userIdInput').value = '';
-        btn.disabled = false;
-        btn.textContent = 'Upgrade Now';
-      });
     </script>
 
     <!-- FAQ Section -->

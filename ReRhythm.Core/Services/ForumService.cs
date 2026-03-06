@@ -80,7 +80,10 @@ public class ForumService
         // Quick fallback check first (faster)
         var (fallbackOk, fallbackReason) = ModerateTextFallback(text);
         if (!fallbackOk)
+        {
+            _logger.LogWarning("Text moderation failed (fallback): {Reason}", fallbackReason);
             return (false, fallbackReason);
+        }
 
         // Then AWS Comprehend for deeper analysis
         try
@@ -95,41 +98,91 @@ public class ForumService
             
             foreach (var result in response.ResultList)
             {
-                var toxicLabels = result.Labels.Where(l => l.Score > 0.7f).Select(l => l.Name).ToList();
+                var toxicLabels = result.Labels.Where(l => l.Score > 0.5f).Select(l => l.Name).ToList();
                 if (toxicLabels.Any())
-                    return (false, $"Inappropriate content detected: {string.Join(", ", toxicLabels)}");
+                {
+                    var reason = $"Inappropriate content detected: {string.Join(", ", toxicLabels)}";
+                    _logger.LogWarning("Text moderation failed (AWS): {Reason}", reason);
+                    return (false, reason);
+                }
             }
             
             return (true, string.Empty);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Comprehend moderation failed");
+            _logger.LogWarning(ex, "Comprehend moderation failed, using fallback result");
             return (true, string.Empty); // Already passed fallback
         }
     }
 
     private (bool IsAppropriate, string Reason) ModerateTextFallback(string text)
     {
+        if (string.IsNullOrWhiteSpace(text))
+            return (false, "Empty content");
+            
         var lowerText = text.ToLower();
         
-        // Basic profanity filter
-        var offensiveWords = new[] { "fuck", "shit", "bitch", "asshole", "damn", "crap", "bastard", "dick", "pussy", "cock" };
+        // Remove emojis and special characters for checking
+        var cleanText = System.Text.RegularExpressions.Regex.Replace(lowerText, @"[^a-z0-9\s]", " ");
+        
+        // Profanity and offensive language - check anywhere in text
+        var offensiveWords = new[] { "fuck", "shit", "bitch", "asshole", "damn", "crap", "bastard", "dick", "pussy", "cock", "nigger", "nigga", "faggot", "retard", "cunt", "whore", "slut", "suck", "dumb" };
         foreach (var word in offensiveWords)
         {
-            if (lowerText.Contains(word))
+            if (cleanText.Contains(word))
+            {
+                _logger.LogWarning("Offensive word detected: {Word}", word);
                 return (false, "Inappropriate language detected");
+            }
+        }
+        
+        // Violence and threats
+        var violenceWords = new[] { "kill you", "murder you", "die", "death to", "shoot you", "bomb", "attack you", "hurt you", "harm you", "beat you" };
+        foreach (var phrase in violenceWords)
+        {
+            if (cleanText.Contains(phrase))
+            {
+                _logger.LogWarning("Violent phrase detected: {Phrase}", phrase);
+                return (false, "Violent or threatening content detected");
+            }
+        }
+        
+        // Hate speech and discrimination
+        var hatePatterns = new[]
+        {
+            "are dumb", "are stupid", "are idiots", "are trash", "are worthless",
+            "should die", "deserve to die", "go kill yourself", "kys",
+            "i hate", "hate all", "hate people who", "you suck", "guys suck"
+        };
+        
+        foreach (var pattern in hatePatterns)
+        {
+            if (cleanText.Contains(pattern))
+            {
+                _logger.LogWarning("Hate speech pattern detected: {Pattern}", pattern);
+                return (false, "Hate speech or discrimination detected");
+            }
         }
         
         // Spam indicators
         if (text.Count(c => c == '!') > 5 || text.Count(c => c == '?') > 5)
+        {
+            _logger.LogWarning("Excessive punctuation detected");
             return (false, "Excessive punctuation detected");
+        }
         
         if (System.Text.RegularExpressions.Regex.Matches(text, @"http[s]?://").Count > 3)
+        {
+            _logger.LogWarning("Too many links detected");
             return (false, "Too many links detected");
+        }
         
         if (text.Length > 20 && text.Count(char.IsUpper) > text.Length * 0.7)
+        {
+            _logger.LogWarning("Excessive capitalization detected");
             return (false, "Excessive capitalization detected");
+        }
         
         return (true, string.Empty);
     }
@@ -643,5 +696,26 @@ public class ForumService
         {
             _logger.LogWarning(ex, "Failed to send email to {Email}", toEmail);
         }
+    }
+
+    public async Task<int> CleanupInappropriatePostsAsync(CancellationToken ct)
+    {
+        var deletedCount = 0;
+        var questions = await GetAllQuestionsAsync(ct);
+        
+        foreach (var question in questions)
+        {
+            var (titleOk, _) = ModerateTextFallback(question.Title);
+            var (contentOk, _) = ModerateTextFallback(question.Content);
+            
+            if (!titleOk || !contentOk)
+            {
+                await DeleteQuestionAsync(question.QuestionId, ct);
+                deletedCount++;
+                _logger.LogWarning("Deleted inappropriate question: {QuestionId} - {Title}", question.QuestionId, question.Title);
+            }
+        }
+        
+        return deletedCount;
     }
 }
