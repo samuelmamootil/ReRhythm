@@ -28,6 +28,6 @@ Built and submitted for an **AWS-judged hackathon**, earning a **Top 3 finish** 
 ##  Architecture
 
 <p align="center">
-  <img src="Assets/rhythmlogo.svg" alt="ReRhythm Logo" width="200" />
+  <img src="Assets/architecture.png" alt="Architecture Diagrqm" />
 </p>
 
